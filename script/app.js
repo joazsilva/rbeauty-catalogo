@@ -2,71 +2,71 @@
 const WHATSAPP_NUMBER = "5599992282510";
 
 const PRODUCTS = [
-{name:"Zero Pore Pad",brand:"MEDICUBE",ml:"70 pads",category:"Pads",price:239.00,images:['assets/medicube/zeropad.jpeg'],
+{name:"Zero Pore Pad",brand:"MEDICUBE",ml:"70 pads",category:"Pads",price:199.00,images:['assets/medicube/medicube-zero-pore-pad.jpg'],
  desc:"Pads de esfoliação dupla com AHA e BHA que removem células mortas, desobstroem os poros e controlam a oleosidade. Ajudam a reduzir cravos, suavizar a textura da pele e minimizar a aparência dos poros. Indicados principalmente para peles mistas, oleosas e com tendência a acne."},
-{name:"PDRN Pink Peptide Serum",brand:"MEDICUBE",ml:"30ml",category:"Séruns",price:230.00,images:['assets/medicube/peptide-serum.webp'],
+{name:"PDRN Pink Peptide Serum",brand:"MEDICUBE",ml:"30ml",category:"Séruns",price:189.00,images:['assets/medicube/medicube-serum-peptide.jpg'],
  desc:"Sérum coreano com PDRN (DNA de salmão) e peptídeos, desenvolvido para hidratar profundamente, melhorar a elasticidade e fortalecer a barreira cutânea. Auxilia na suavização de linhas finas e proporciona uma pele mais firme, luminosa e saudável. Indicado para todos os tipos de pele."},
-{name:"PDRN 99% Salmon Ampoule",brand:"MEDICUBE",ml:null,category:"Séruns",price:159.00,images:['assets/medicube/serum-ampola.jpg'],
+{name:"PDRN 99% Salmon Ampoule",brand:"MEDICUBE",ml:null,category:"Séruns",price:159.00,images:['assets/medicube/medicube-ampoule.jpg'],
  desc:"Ampoule coreana altamente concentrada em PDRN (DNA de salmão), ativo conhecido por favorecer a regeneração e recuperação da pele. Proporciona hidratação intensa, melhora a firmeza e ajuda a reduzir sinais de cansaço. Ideal para peles secas, sensibilizadas ou com sinais de envelhecimento."},
-{name:"Collagen Night Wrapping Mask",brand:"MEDICUBE",ml:"75ml",category:"Máscaras",price:219.00,images:['assets/medicube/collagen-night.jpg'],
+{name:"Collagen Night Wrapping Mask",brand:"MEDICUBE",ml:"75ml",category:"Máscaras",price:199.00,images:['assets/medicube/medicube-collagen-night.jpg'],
  desc:"Máscara facial noturna coreana enriquecida com colágeno, desenvolvida para hidratar profundamente enquanto a pele descansa. Forma uma película que ajuda a potencializar a ação dos ativos, deixando a pele mais firme, macia e revitalizada ao acordar. Indicada para todos os tipos de pele."},
-{name:"PDRN Pink Vita Coating Mask",brand:"MEDICUBE",ml:null,category:"Máscaras",price:50.00,images:['assets/medicube/coating-mask.jpg'],
+{name:"PDRN Pink Vita Coating Mask",brand:"MEDICUBE",ml:null,category:"Máscaras",price:39.00,images:['assets/medicube/coating-mask.jpg'],
  desc:"Máscara facial coreana com PDRN e vitaminas, criada para hidratar, revitalizar e devolver luminosidade à pele opaca. Ajuda a fortalecer a barreira cutânea e proporciona efeito glow imediato, deixando a pele mais uniforme e saudável. Indicada para todos os tipos de pele."},
-{name:"Deep Vita C Capsule Cream",brand:"MEDICUBE",ml:"55g",category:"Hidratantes",price:245.00,images:['assets/medicube/capsule-cream.webp'],
+{name:"Deep Vita C Capsule Cream",brand:"MEDICUBE",ml:"55g",category:"Hidratantes",price:209.00,images:['assets/medicube/capsule-cream.webp'],
  desc:"Creme hidratante coreano com cápsulas de vitamina C que se rompem durante a aplicação, oferecendo ação antioxidante e iluminadora. Combina 50% de água de espinheiro-marítimo, 5% de niacinamida e vitaminas que auxiliam na redução da aparência de manchas, uniformizam o tom da pele e promovem hidratação duradoura. Indicado para todos os tipos de pele, especialmente as com manchas e falta de viço."},
-{name:"TXA Niacinamide Capsule Cream",brand:"MEDICUBE",ml:"55g",category:"Hidratantes",price:220.00,images:['assets/medicube/niacinamide-capsule-cream.webp'],
+{name:"TXA Niacinamide Capsule Cream",brand:"MEDICUBE",ml:"55g",category:"Hidratantes",price:199.00,images:['assets/medicube/niacinamide-capsule-cream.webp'],
  desc:"Creme hidratante coreano formulado com Ácido Tranexâmico (TXA) e Niacinamida, ativos reconhecidos por auxiliar no clareamento de manchas e uniformização da pele. Também ajuda a controlar a oleosidade e fortalecer a barreira cutânea. Ideal para peles com hiperpigmentação ou marcas de acne."},
-{name:"PDRN Pink Collagen Capsule Cream",brand:"MEDICUBE",ml:"55g",category:"Hidratantes",price:220.00,images:['assets/medicube/collagen-capsule-cream.webp'],
+{name:"PDRN Pink Collagen Capsule Cream",brand:"MEDICUBE",ml:"55g",category:"Hidratantes",price:199.00,images:['assets/medicube/medicube-capsule-cream.jpg'],
  desc:"Hidratante coreano que combina PDRN e colágeno para promover hidratação intensa, firmeza e elasticidade. Auxilia na redução da aparência de linhas finas e proporciona uma pele mais preenchida e viçosa. Indicado para todos os tipos de pele, especialmente aquelas com manchas, tom irregular ou sinais de envelhecimento."},
-{name:"PDRN Pink Collagen Exosome Shot 2000",brand:"MEDICUBE",ml:"30ml",category:"Tratamentos Intensivos",price:220.00,badge:"premium",images:['assets/medicube/collagen-exosome-shot.webp'],
+{name:"PDRN Pink Collagen Exosome Shot 2000",brand:"MEDICUBE",ml:"30ml",category:"Tratamentos Intensivos",price:209.00,badge:"premium",images:['assets/medicube/medicube-shot-2000.jpg'],
  desc:"Tratamento intensivo coreano que associa PDRN, colágeno e exossomos. Promove renovação da pele, melhora a firmeza e auxilia na redução dos sinais de envelhecimento. Sua tecnologia utiliza microagulhas cosméticas (espículas) de origem mineral que potencializam a absorção dos ativos nas camadas mais profundas. Indicado para peles com perda de elasticidade."},
-{name:"One Day Exosome Shot 7500",brand:"MEDICUBE",ml:"30ml",category:"Tratamentos Intensivos",price:240.00,badge:"premium",images:['assets/medicube/one-day-exosome.avif'],
+{name:"One Day Exosome Shot 7500",brand:"MEDICUBE",ml:"30ml",category:"Tratamentos Intensivos",price:209.00,badge:"premium",images:['assets/medicube/one-day-exosome.avif'],
  desc:"Tratamento intensivo coreano que combina microespículas de origem mineral, exossomos e os ácidos AHA, BHA e PHA para promover uma renovação da pele semelhante ao efeito de um microagulhamento líquido. As microespículas ajudam a potencializar a absorção dos ativos, enquanto os ácidos refinam a textura e os poros. Deve ser utilizado à noite; é normal sentir uma leve sensação de pinicamento durante a aplicação."},
-{name:"Jelly Brush",brand:"MEDICUBE",ml:"espátula de silicone",category:"Acessórios de Skincare",price:75.00,images:['assets/medicube/jelly-brush.jpg'],
+{name:"Jelly Brush",brand:"MEDICUBE",ml:"espátula de silicone",category:"Acessórios de Skincare",price:69.00,images:['assets/medicube/jelly-brush.jpg'],
  desc:"Acessório desenvolvido para aplicar máscaras faciais e cremes de forma uniforme e higiênica. O silicone flexível evita desperdícios, reduz o contato das mãos com o produto e facilita a aplicação em todas as áreas do rosto."},
-{name:"Age-R Booster Pro",brand:"MEDICUBE",ml:null,category:"Aparelhos de Skincare",price:1399.00,badge:"premium",images:['assets/medicube/booster-pro.avif'],
+{name:"Age-R Booster Pro",brand:"MEDICUBE",ml:null,category:"Aparelhos de Skincare",price:1299.00,badge:"premium",images:['assets/medicube/booster-pro.avif'],
  desc:"Dispositivo de skincare desenvolvido para potencializar a absorção dos cosméticos por meio de tecnologias avançadas, tornando a rotina de cuidados mais eficaz."},
-{name:"Age-R Booster Mini",brand:"MEDICUBE",ml:null,category:"Aparelhos de Skincare",price:999.00,badge:"premium",images:['assets/medicube/booster-mini.jfif'],
+{name:"Age-R Booster Mini",brand:"MEDICUBE",ml:null,category:"Aparelhos de Skincare",price:899.00,badge:"premium",images:['assets/medicube/booster-mini.jfif'],
  desc:"Versão compacta do famoso Age-R Booster Pro, ideal para quem busca praticidade sem abrir mão da tecnologia. Auxilia na absorção dos produtos aplicados na pele."},
-{name:"Retinal Shot",brand:"CELIMAX",ml:"15ml",category:"Tratamentos Intensivos",price:219.00,badge:"bestseller",images:['assets/celimax/retinal-shot.avif'],
+{name:"Retinal Shot",brand:"CELIMAX",ml:"15ml",category:"Tratamentos Intensivos",price:199.00,badge:"bestseller",images:['assets/celimax/retinal-shot.avif'],
  desc:"O tratamento antienvelhecimento mais famoso da marca coreana Celimax, formulado com retinal e tecnologia de microespículas que potencializa a absorção dos ativos. Auxilia na renovação celular, melhora a firmeza da pele, suaviza linhas finas e rugas e refina a textura e a aparência dos poros. Indicado para peles com sinais de envelhecimento ou textura irregular."},
 {name:"Retinol Shot Tightening Serum",brand:"CELIMAX",ml:"30ml",category:"Séruns",price:179.00,images:['assets/celimax/shot-tightening.avif'],
  desc:"Sérum coreano com retinol, desenvolvido para melhorar a firmeza da pele, suavizar rugas e estimular a renovação celular. Também auxilia na uniformização da textura e no controle da oleosidade. Indicado para peles maduras e para quem deseja prevenir os primeiros sinais da idade."},
-{name:"Pore + Dark Spot Brightening Cream",brand:"CELIMAX",ml:"35ml",category:"Hidratantes",price:199.00,images:['assets/celimax/dark-spot.jpg'],
+{name:"Pore + Dark Spot Brightening Cream",brand:"CELIMAX",ml:"35ml",category:"Hidratantes",price:179.00,images:['assets/celimax/dark-spot.jpg'],
  desc:"Creme hidratante coreano multifuncional formulado para auxiliar na redução de manchas e marcas de acne, uniformizar o tom da pele e melhorar a aparência da textura e dos poros."},
-{name:"Madagascar Centella Ampoule",brand:"SKIN1004",ml:"55ml",category:"Séruns",price:199.00,badge:"bestseller",images:['assets/skin1004/adagascar-centella.webp'],
+{name:"Madagascar Centella Ampoule",brand:"SKIN1004",ml:"55ml",category:"Séruns",price:189.00,badge:"bestseller",images:['assets/skin1004/skin1004-centella-55ml.jpg'],
  desc:"Ampoule facial coreana formulada com extrato puro de Centella Asiática, conhecida por sua ação calmante e reparadora. Ajuda a reduzir irritações, vermelhidão, oleosidade e o ressecamento, enquanto hidrata profundamente e fortalece a barreira cutânea. Indicada para todos os tipos de pele, especialmente as sensíveis."},
-{name:"Madagascar Centella Tea-Trica Ampoule",brand:"SKIN1004",ml:"100ml",category:"Séruns",price:249.00,images:['assets/skin1004/centella-tea.avif'],
+{name:"Madagascar Centella Tea-Trica Ampoule",brand:"SKIN1004",ml:"100ml",category:"Séruns",price:229.00,images:['assets/skin1004/centella-tea.avif'],
  desc:"Ampoule coreana que combina Centella Asiática, complexo Tea-Trica e ativos calmantes para controlar a oleosidade e aliviar peles com tendência à acne. Ajuda a reduzir vermelhidão, fortalecer a barreira cutânea e equilibrar a pele. Indicada para peles oleosas, acneicas e sensíveis."},
 {name:"Madagascar Centella Tone Brightening Capsule Ampoule",brand:"SKIN1004",ml:"50ml",category:"Séruns",price:159.00,images:['assets/skin1004/centella-tone-brightening.webp'],
  desc:"Ampoule coreana formulada com Centella Asiática, Niacinamida e cápsulas iluminadoras, desenvolvida para hidratar, uniformizar o tom da pele e reduzir a aparência de manchas. Deixa a pele mais luminosa e saudável sem causar irritação. Indicada para todos os tipos de pele."},
-{name:"Madagascar Centella Light Cleansing Oil",brand:"SKIN1004",ml:"200ml",category:"Limpeza",price:219.00,images:['assets/skin1004/centella-light-cleansing-oil.webp'],
+{name:"Madagascar Centella Light Cleansing Oil",brand:"SKIN1004",ml:"200ml",category:"Limpeza",price:199.00,images:['assets/skin1004/centella-light-cleansing-oil.webp'],
  desc:"Óleo de limpeza facial coreano que remove maquiagem, protetor solar e impurezas sem ressecar a pele. Formulado com Centella Asiática e óleos vegetais leves, limpa profundamente enquanto preserva a hidratação natural da pele. Indicado para todos os tipos de pele."},
-{name:"Kit Madagascar Centella Travel",brand:"SKIN1004",ml:null,category:"Kits",price:349.00,badge:"new",images:['assets/skin1004/centella-travel.jfif'],
+{name:"Kit Madagascar Centella Travel",brand:"SKIN1004",ml:null,category:"Kits",price:319.00,badge:"new",images:['assets/skin1004/centella-travel.jfif'],
  desc:"Kit coreano com os principais produtos da linha Madagascar Centella, ideal para conhecer a marca ou levar em viagens. Reúne itens para limpeza, hidratação e cuidado calmante, proporcionando uma rotina completa para fortalecer a barreira cutânea. Indicado para todos os tipos de pele."},
-{name:"No. 9 NAD+ Retinol Volumetox Eye Cream",brand:"NUMBUZIN",ml:"10ml",category:"Área dos Olhos",price:260.00,badge:"bestseller",images:['assets/numbuzin/retinol-volumetox.webp'],
+{name:"No. 9 NAD+ Retinol Volumetox Eye Cream",brand:"NUMBUZIN",ml:"10ml",category:"Área dos Olhos",price:239.00,badge:"bestseller",images:['assets/numbuzin/retinol-volumetox.webp'],
  desc:"Um dos produtos mais icônicos da marca coreana Numbuzin. Creme antienvelhecimento para a área dos olhos formulado com NAD+, retinol e peptídeos, desenvolvido para reduzir linhas de expressão e rugas (pés de galinha), melhorar a firmeza da pele e minimizar bolsas e olheiras. Proporciona hidratação e aparência mais descansada. Indicado para todos os tipos de pele."},
-{name:"No. 9 NAD+ Bio Lifting Essence",brand:"NUMBUZIN",ml:"50ml",category:"Essências",price:319.00,badge:"bestseller",images:['assets/numbuzin/bio-lifting.webp'],
+{name:"No. 9 NAD+ Bio Lifting Essence",brand:"NUMBUZIN",ml:"50ml",category:"Essências",price:289.00,badge:"bestseller",images:['assets/numbuzin/bio-lifting.webp'],
  desc:"Essência mais famosa da marca coreana Numbuzin, enriquecida com NAD+, peptídeos e ativos firmadores, promove o efeito glass skin ao melhorar a elasticidade, a firmeza e a hidratação da pele. Também auxilia na redução de linhas finas, proporcionando uma aparência mais viçosa, luminosa e revitalizada."},
-{name:"Niacinamide 10% + TXA 4% Serum",brand:"ANUA",ml:"30ml",category:"Séruns",price:260.00,images:['assets/anua/niacinamide.webp'],
+{name:"Niacinamide 10% + TXA 4% Serum",brand:"ANUA",ml:"30ml",category:"Séruns",price:229.00,images:['assets/anua/niacinamide.webp'],
  desc:"Sérum coreano com textura aquosa e rápida absorção, formulado com 10% de Niacinamida e 4% de Ácido Tranexâmico (TXA) focado na redução de manchas, marcas de acne e hiperpigmentação. Também ajuda a controlar a oleosidade e uniformizar o tom da pele. Indicado para todos os tipos de pele, especialmente as com tom irregular."},
-{name:"345 Relief Cream",brand:"DR. ALTHEA",ml:"50ml",category:"Hidratantes",price:260.00,images:['assets/dr-althea/relief-cream.avif'],
+{name:"345 Relief Cream",brand:"DR. ALTHEA",ml:"50ml",category:"Hidratantes",price:229.00,images:['assets/dr-althea/dr-althea-relief-cream.jpg'],
  desc:"Hidratante coreano com textura gel-creme, desenvolvido para hidratar, acalmar e fortalecer a barreira cutânea. Sua fórmula leve proporciona conforto sem pesar, sendo ideal para peles oleosas, acneicas, sensíveis, pós-ácidos e pós-retinal."},
-{name:"Vitamin C Boosting Serum",brand:"DR. ALTHEA",ml:"30ml",category:"Séruns",price:219.00,images:['assets/dr-althea/dr-althea-vitamin-c.avif'],
+{name:"Vitamin C Boosting Serum",brand:"DR. ALTHEA",ml:"30ml",category:"Séruns",price:199.00,images:['assets/dr-althea/dr-althea-vitamin-c.avif'],
  desc:"Sérum coreano formulado com 63% de extrato de espinheiro-amarelo, naturalmente rico em vitamina C. Ajuda a iluminar a pele, reduzir a aparência de manchas e marcas de acne, uniformizar o tom e oferecer ação antioxidante, enquanto promove hidratação e uma aparência mais radiante."},
-{name:"Airy Sunstick",brand:"ABIB",ml:"23g",category:"Protetor Solar",price:199.00,badge:"bestseller",images:['assets/abib/abib_airy_sunstick.webp'],
+{name:"Airy Sunstick",brand:"ABIB",ml:"23g",category:"Protetor Solar",price:189.00,badge:"bestseller",images:['assets/abib/abib_airy_sunstick.webp'],
  desc:"Protetor solar em bastão, queridinho da beleza coreana, com alta proteção contra os raios UVA e UVB e acabamento leve, confortável e sem efeito pegajoso. Ajuda a controlar a oleosidade e é fácil de reaplicar ao longo do dia, inclusive sobre a maquiagem, sem borrá-la. Indicado para todos os tipos de pele, especialmente as mistas e oleosas."},
-{name:"PDRN Reedle Shot Eye Lifter",brand:"VT COSMETICS",ml:"15ml",category:"Área dos Olhos",price:319.00,badge:"premium",images:['assets/vt-cosmetics/vt-cosmetics-reedle-shot.webp'],
+{name:"PDRN Reedle Shot Eye Lifter",brand:"VT COSMETICS",ml:"15ml",category:"Área dos Olhos",price:289.00,badge:"premium",images:['assets/vt-cosmetics/vt-cosmetics-reedle-shot.webp'],
  desc:"Tratamento coreano para a área dos olhos que combina PDRN e a exclusiva tecnologia Reedle Shot, com microespículas de origem mineral que potencializam a absorção dos ativos. Auxilia na melhora da firmeza, suaviza linhas finas, reduz os sinais de cansaço e proporciona hidratação intensa, deixando o olhar mais revitalizado e iluminado. Durante a aplicação é comum sentir um leve formigamento causado pelas microespículas."},
-{name:"Dark Spot Correcting Glow Serum",brand:"AXIS-Y",ml:"50ml",category:"Séruns",price:199.00,images:['assets/axis-y/serum-facial-axis-y.webp'],
+{name:"Dark Spot Correcting Glow Serum",brand:"AXIS-Y",ml:"50ml",category:"Séruns",price:189.00,images:['assets/axis-y/serum-facial-axis-y.webp'],
  desc:"Sérum clareador da marca coreana AXIS-Y, enriquecido com 5% de Niacinamida e Esqualano. Ajuda a uniformizar o tom da pele, suavizar manchas, melasma e marcas de acne, além de promover hidratação sem pesar e um acabamento naturalmente iluminado. Indicado para todos os tipos de pele."},
-{name:"Grow Turn Exosome",brand:"LILYEVE",ml:"100ml",category:"Cabelo",price:309.00,badge:"bestseller",images:['assets/lilyeve/grow-turn-brush.webp'],
+{name:"Grow Turn Exosome",brand:"LILYEVE",ml:"100ml",category:"Cabelo",price:289.00,badge:"bestseller",images:['assets/lilyeve/lilyeve-grow-turn.jpg'],
  desc:"Tratamento capilar mais vendido da marca coreana Lilyeve, desenvolvido com exclusiva tecnologia de exossomos para fortalecer o couro cabeludo e revitalizar os fios desde a raiz. Sua fórmula ajuda a reduzir a queda, estimula um ambiente favorável ao crescimento saudável dos cabelos e melhora a densidade, a hidratação e o brilho. Indicado para todos os tipos de cabelo, especialmente os finos, enfraquecidos ou com queda."},
-{name:"Grow:Turn Exosome Dual Lash Serum",brand:"LILYEVE",ml:null,category:"Cílios/Sobrancelhas",price:299.00,badge:"new",images:['assets/lilyeve/Lilyeve_Grow_Turn_Exosome.webp'],
+{name:"Grow:Turn Exosome Dual Lash Serum",brand:"LILYEVE",ml:null,category:"Cílios/Sobrancelhas",price:259.00,badge:"new",images:['assets/lilyeve/Lilyeve_Grow_Turn_Exosome.webp'],
  desc:"Sérum coreano enriquecido com exossomos e ativos fortalecedores, que promove cílios e sobrancelhas com aparência mais cheia, forte e saudável. Possui sistema Dual Care, com dois aplicadores exclusivos: um pincel para nutrir e proteger os fios durante o dia e um aplicador de precisão para revitalizar a raiz durante a noite."},
 {name:"Premium Touch Hair Mask",brand:"FINO",ml:"230g",category:"Cabelo",price:159.00,images:['assets/fino/mascara_premium_touch_hair.webp'],
  desc:"A famosa máscara capilar japonesa reconhecida por promover um verdadeiro tratamento de salão em casa. Enriquecida com geleia real, PCA, Lipidure EX e esqualano, hidrata profundamente, repara os danos e devolve maciez, brilho e sedosidade aos fios. Ideal para cabelos secos, danificados, quimicamente tratados ou com frizz."},
-{name:"Premium Touch Hair Oil",brand:"FINO",ml:"70ml",category:"Cabelo",price:159.00,images:['assets/fino/fino-premium-touch-hair-oil.webp'],
+{name:"Premium Touch Hair Oil",brand:"FINO",ml:"70ml",category:"Cabelo",price:159.00,images:['assets/fino/fino-touch-hair-oil.jpg'],
  desc:"O óleo capilar japonês mais famoso da linha Fino, desenvolvido para reparar, nutrir e proteger os fios sem pesar. Sua fórmula de textura leve hidrata profundamente, controla o frizz, sela as cutículas e proporciona brilho intenso e toque sedoso, além de ajudar a proteger os cabelos dos danos causados pelo calor. Ideal para cabelos secos, danificados ou quimicamente tratados."},
 {name:"Tsubaki Premium EX Repair Mask",brand:"SHISEIDO",ml:"180g",category:"Cabelo",price:159.00,badge:"bestseller",images:['assets/shiseido/tsubaki_premium_repair_mask.webp'],
  desc:"Uma das máscaras capilares mais famosas do Japão, desenvolvida pela Shiseido para reparar profundamente cabelos secos e danificados. Sua fórmula com óleo de camélia (Tsubaki), proteínas e aminoácidos proporciona hidratação intensa, reduz o frizz, restaura a maciez e devolve brilho e sedosidade aos fios. Ideal para cabelos ressecados, quimicamente tratados ou danificados pelo calor."},
@@ -227,17 +227,17 @@ function whatsappCheckout(single=null){
   let total = 0;
   if(single){
     const p = findProduct(single.id);
-    lines.push(`• ${p.brand} — ${p.name}${p.ml?` (${p.ml})`:''}\\n  Quantidade: ${single.qty}`);
+    lines.push(`• ${p.brand} — ${p.name}${p.ml?` (${p.ml})`:''}\n  Quantidade: ${single.qty}`);
     total = p.price*single.qty;
   } else {
     if(state.cart.length===0){ showToast("Seu carrinho está vazio"); return; }
     state.cart.forEach(c=>{
       const p = findProduct(c.id);
-      lines.push(`• ${p.brand} — ${p.name}${p.ml?` (${p.ml})`:''}\\n  Quantidade: ${c.qty}`);
+      lines.push(`• ${p.brand} — ${p.name}${p.ml?` (${p.ml})`:''}\n  Quantidade: ${c.qty}`);
       total += p.price*c.qty;
     });
   }
-  const msg = `Olá! 👋\\n\\nTenho interesse nos seguintes produtos:\\n\\n${lines.join('\\n\\n')}\\n\\nTotal: ${fmt(total)}\\n\\nGostaria de finalizar meu pedido.`;
+  const msg = `Olá! 👋\n\nTenho interesse nos seguintes produtos:\n\n${lines.join('\n\n')}\n\nTotal: ${fmt(total)}\n\nGostaria de finalizar meu pedido.`;
   const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
   window.open(url, '_blank');
 }
@@ -326,9 +326,9 @@ function homeHtml(){
   const filtered = getFiltered();
   return `
   <section class="hero">
-    <div class="hero-ring"><div class="logo-mark"><span>R</span></div></div>
-    <h1>RBeauty<br>Imports</h1>
-    <p class="sub">Cosméticos importados Premium</p>
+    <div class="hero-ring"><div class="logo-mark" style="background:none;box-shadow:none;"><img src="assets/logo/icone-r.png" alt="RBeauty" style="width:100%;height:100%;object-fit:contain;"></div></div>
+    <h1>RBeauty</h1>
+    <p class="sub">CURADORIA DE BELEZA IMPORTADA</p>
     <div class="hero-cta">
       <button class="btn btn-gold btn-block" onclick="document.getElementById('catalogo').scrollIntoView({behavior:'smooth'})">Ver produtos</button>
       
@@ -386,7 +386,7 @@ function footerHtml(){
     <div class="footer-inner">
       <div>
         <div class="footer-logo">
-          <div class="logo-mark"><span>R</span></div>
+          <div class="logo-mark" style="background:none;box-shadow:none;"><img src="assets/logo/icone-r.png" alt="RBeauty" style="width:100%;height:100%;object-fit:contain;"></div>
           <div class="logo-text">RBeauty Imports<small>Cosméticos importados premium</small></div>
         </div>
       </div>
@@ -539,7 +539,7 @@ function menuDrawerHtml(){
   return `
   <div id="menuDrawer" class="menu-drawer ${state.menuOpen?'show':''}">
     <div class="menu-head">
-      <div class="logo"><div class="logo-mark"><span>R</span></div><div class="logo-text">RBeauty<small>Imports</small></div></div>
+      <div class="logo"><div class="logo-mark" style="background:none;box-shadow:none;"><img src="assets/logo/icone-r.png" alt="RBeauty" style="width:100%;height:100%;object-fit:contain;"></div><div class="logo-text">RBeauty<small>Imports</small></div></div>
       <button class="icon-btn" onclick="closeMenu()">${UI.close}</button>
     </div>
     <div class="menu-body">
@@ -595,7 +595,7 @@ function headerHtml(){
   <header class="topbar" id="topbar">
     <div class="topbar-inner">
       <div class="logo" onclick="goHome()">
-        <div class="logo-mark"><span>R</span></div>
+        <div class="logo-mark" style="background:none;box-shadow:none;"><img src="assets/logo/icone-r.png" alt="RBeauty" style="width:100%;height:100%;object-fit:contain;"></div>
         <div class="logo-text">RBeauty<small>Imports</small></div>
       </div>
       <div class="topbar-actions">
