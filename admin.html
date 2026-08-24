@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RBeauty Imports — Painel Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#0f0e0c;
+    --panel:#1a1815;
+    --panel-2:#231f1a;
+    --border:#332d24;
+    --gold:#c9a15a;
+    --gold-deep:#a8823a;
+    --text:#f3efe6;
+    --text-dim:#a89f8f;
+    --danger:#c85c5c;
+    --ok:#6fae7a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 16px 80px;}
+
+  /* LOGIN */
+  .login-screen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .login-card{
+    width:100%;max-width:360px;background:var(--panel);border:1px solid var(--border);
+    border-radius:14px;padding:32px 28px;
+  }
+  .login-card h1{font-size:20px;margin:0 0 4px;letter-spacing:.02em;}
+  .login-card p.sub{color:var(--text-dim);font-size:13px;margin:0 0 24px;}
+  label{display:block;font-size:12px;color:var(--text-dim);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.05em;}
+  input,select,textarea{
+    width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    padding:11px 12px;border-radius:8px;font-size:14px;font-family:inherit;
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold-deep);}
+  textarea{resize:vertical;min-height:80px;}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    background:var(--gold-deep);color:#1a1408;border:none;font-weight:600;
+    padding:11px 18px;border-radius:8px;cursor:pointer;font-size:14px;
+  }
+  .btn:hover{background:var(--gold);}
+  .btn-block{width:100%;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--gold-deep);}
+  .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);}
+  .btn-danger:hover{background:var(--danger);color:#1a0e0e;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .error-msg{color:var(--danger);font-size:13px;margin-top:10px;min-height:16px;}
+
+  /* APP SHELL */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:24px;
+  }
+  .topbar h1{font-size:17px;margin:0;letter-spacing:.02em;}
+  .topbar .who{font-size:12px;color:var(--text-dim);}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px;}
+  .toolbar input[type=text]{max-width:260px;}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  thead th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);
+    padding:12px 14px;border-bottom:1px solid var(--border);background:var(--panel-2);
+  }
+  tbody td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:14px;vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--panel-2);}
+  .thumb{width:38px;height:38px;border-radius:6px;object-fit:cover;background:var(--panel-2);}
+  .row-actions{display:flex;gap:6px;}
+  .row-actions button{
+    background:transparent;border:1px solid var(--border);color:var(--text-dim);
+    padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;
+  }
+  .row-actions button:hover{border-color:var(--gold-deep);color:var(--text);}
+  .badge-tag{
+    font-size:10px;text-transform:uppercase;padding:2px 8px;border-radius:20px;
+    background:rgba(201,161,90,.15);color:var(--gold);border:1px solid rgba(201,161,90,.3);
+  }
+  .empty-state{padding:60px 20px;text-align:center;color:var(--text-dim);}
+
+  /* MODAL */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;
+    padding:30px 16px;overflow-y:auto;z-index:50;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    width:100%;max-width:560px;background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    padding:26px;margin-bottom:40px;
+  }
+  .modal h2{font-size:17px;margin:0 0 18px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;}
+  .img-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .img-list .img-chip{
+    position:relative;width:56px;height:56px;border-radius:8px;overflow:hidden;border:1px solid var(--border);
+  }
+  .img-list .img-chip img{width:100%;height:100%;object-fit:cover;}
+  .img-list .img-chip button{
+    position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);color:#fff;border:none;
+    width:16px;height:16px;border-radius:50%;font-size:10px;line-height:1;cursor:pointer;
+  }
+  .upload-btn{
+    display:inline-block;margin-top:8px;font-size:12px;color:var(--text-dim);border:1px dashed var(--border);
+    padding:8px 12px;border-radius:8px;cursor:pointer;
+  }
+  .upload-btn:hover{border-color:var(--gold-deep);color:var(--text);}
+  .hint{font-size:11px;color:var(--text-dim);margin-top:4px;}
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:100;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media(max-width:560px){ .grid-2{grid-template-columns:1fr;} thead th:nth-child(3), tbody td:nth-child(3){display:none;} }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* ============ CONFIG — mesmos dados usados no site ============ */
+const SUPABASE_URL = "https://kzqnmhshskrxquvfywyd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6cW5taHNoc2tyeHF1dmZ5d3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1NTM4NTEsImV4cCI6MjEwMzEyOTg1MX0.mHAo4P3r0c6E1HeaSAPZMEDtGyKoPQAa8bJDbVCOlaM";
+const IMAGES_BUCKET = "product-images";
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const state = {
+  session: null,
+  products: [],
+  loading: true,
+  search: "",
+  modalOpen: false,
+  editingProduct: null, // null = novo produto
+  form: {},
+  saving: false,
+  loginError: "",
+};
+
+function fmt(n){ return "R$ " + Number(n||0).toFixed(2).replace('.',','); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+/* ============ AUTH ============ */
+async function handleLogin(e){
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  state.loginError = "";
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = "Entrando...";
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = "Entrar";
+  if(error){
+    state.loginError = "E-mail ou senha inválidos.";
+    render();
+    return;
+  }
+  state.session = data.session;
+  await loadProducts();
+  render();
+}
+async function handleLogout(){
+  await sb.auth.signOut();
+  state.session = null;
+  render();
+}
+
+/* ============ DATA ============ */
+async function loadProducts(){
+  state.loading = true; render();
+  const { data, error } = await sb.from('products').select('*').order('created_at', { ascending:false });
+  state.loading = false;
+  if(error){ showToast("Erro ao carregar produtos: " + error.message); return; }
+  state.products = data || [];
+  render();
+}
+
+function openNewModal(){
+  state.editingProduct = null;
+  state.form = { name:"", brand:"", ml:"", category:"", price:"", images:[], description:"", badge:"" };
+  state.modalOpen = true;
+  render();
+}
+function openEditModal(p){
+  state.editingProduct = p;
+  state.form = { ...p, images:[...(p.images||[])] };
+  state.modalOpen = true;
+  render();
+}
+function closeModal(){
+  state.modalOpen = false;
+  render();
+}
+
+function updateFormField(field, value){
+  state.form[field] = value;
+}
+
+async function handleImageUpload(fileInput){
+  const files = Array.from(fileInput.files || []);
+  if(!files.length) return;
+  const uploadBtn = document.getElementById('uploadLabel');
+  uploadBtn.textContent = "Enviando...";
+  for(const file of files){
+    const path = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-]/g,'_')}`;
+    const { error } = await sb.storage.from(IMAGES_BUCKET).upload(path, file);
+    if(error){ showToast("Erro ao enviar imagem: " + error.message); continue; }
+    const { data } = sb.storage.from(IMAGES_BUCKET).getPublicUrl(path);
+    state.form.images = [...(state.form.images||[]), data.publicUrl];
+  }
+  uploadBtn.textContent = "+ Adicionar fotos";
+  fileInput.value = "";
+  render();
+}
+function removeImage(idx){
+  state.form.images.splice(idx,1);
+  render();
+}
+
+async function handleSaveProduct(e){
+  e.preventDefault();
+  state.saving = true; render();
+  const payload = {
+    name: state.form.name?.trim(),
+    brand: state.form.brand?.trim(),
+    ml: state.form.ml?.trim() || null,
+    category: state.form.category?.trim(),
+    price: parseFloat(String(state.form.price).replace(',','.')) || 0,
+    images: state.form.images || [],
+    description: state.form.description?.trim() || "",
+    badge: state.form.badge || null,
+  };
+  if(!payload.name || !payload.brand || !payload.category || !payload.price){
+    state.saving = false;
+    showToast("Preencha nome, marca, categoria e preço.");
+    render();
+    return;
+  }
+  let error;
+  if(state.editingProduct){
+    ({ error } = await sb.from('products').update(payload).eq('id', state.editingProduct.id));
+  } else {
+    ({ error } = await sb.from('products').insert(payload));
+  }
+  state.saving = false;
+  if(error){ showToast("Erro ao salvar: " + error.message); render(); return; }
+  showToast(state.editingProduct ? "Produto atualizado ✓" : "Produto adicionado ✓");
+  state.modalOpen = false;
+  await loadProducts();
+}
+
+async function handleDeleteProduct(p){
+  if(!confirm(`Remover "${p.name}"? Essa ação não pode ser desfeita.`)) return;
+  const { error } = await sb.from('products').delete().eq('id', p.id);
+  if(error){ showToast("Erro ao remover: " + error.message); return; }
+  showToast("Produto removido");
+  await loadProducts();
+}
+
+function setSearch(v){ state.search = v; render(); }
+function filteredProducts(){
+  const q = state.search.trim().toLowerCase();
+  if(!q) return state.products;
+  return state.products.filter(p => (p.name+p.brand+p.category).toLowerCase().includes(q));
+}
+
+/* ============ RENDER ============ */
+function loginScreenHtml(){
+  return `
+  <div class="login-screen">
+    <div class="login-card">
+      <h1>RBeauty Imports</h1>
+      <p class="sub">Painel administrativo</p>
+      <form onsubmit="handleLogin(event)">
+        <label>E-mail</label>
+        <input id="loginEmail" type="email" required autocomplete="username">
+        <label>Senha</label>
+        <input id="loginPassword" type="password" required autocomplete="current-password">
+        <div class="error-msg">${state.loginError}</div>
+        <button id="loginBtn" class="btn btn-block" style="margin-top:6px;" type="submit">Entrar</button>
+      </form>
+    </div>
+  </div>`;
+}
+
+function productRowHtml(p){
+  const thumb = (p.images && p.images[0]) ? `<img class="thumb" src="${p.images[0]}">` : `<div class="thumb"></div>`;
+  return `
+  <tr>
+    <td>${thumb}</td>
+    <td>
+      <div style="font-weight:600;">${p.name}</div>
+      <div style="color:var(--text-dim);font-size:12px;">${p.brand}${p.badge?` · <span class="badge-tag">${p.badge}</span>`:''}</div>
+    </td>
+    <td>${p.category}</td>
+    <td>${fmt(p.price)}</td>
+    <td>
+      <div class="row-actions">
+        <button onclick='openEditModal(${JSON.stringify(p).replace(/'/g,"&apos;")})'>Editar</button>
+        <button onclick='handleDeleteProduct(${JSON.stringify(p).replace(/'/g,"&apos;")})'>Remover</button>
+      </div>
+    </td>
+  </tr>`;
+}
+
+function dashboardHtml(){
+  const list = filteredProducts();
+  return `
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Produtos — RBeauty Imports</h1>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span class="who">${state.session?.user?.email || ''}</span>
+        <button class="btn btn-ghost" onclick="handleLogout()">Sair</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input type="text" placeholder="Buscar produto..." value="${state.search}" oninput="setSearch(this.value)">
+      <button class="btn" onclick="openNewModal()">+ Novo produto</button>
+      <span style="color:var(--text-dim);font-size:13px;margin-left:auto;">${list.length} produto(s)</span>
+    </div>
+    ${state.loading ? `<div class="empty-state">Carregando...</div>` :
+      list.length===0 ? `<div class="empty-state">Nenhum produto encontrado.</div>` :
+      `<table>
+        <thead><tr><th></th><th>Produto</th><th>Categoria</th><th>Preço</th><th></th></tr></thead>
+        <tbody>${list.map(productRowHtml).join('')}</tbody>
+      </table>`
+    }
+  </div>
+  ${modalHtml()}`;
+}
+
+function modalHtml(){
+  if(!state.modalOpen) return `<div class="modal-overlay"></div>`;
+  const f = state.form;
+  return `
+  <div class="modal-overlay show" onclick="if(event.target===this) closeModal()">
+    <div class="modal">
+      <h2>${state.editingProduct ? 'Editar produto' : 'Novo produto'}</h2>
+      <form onsubmit="handleSaveProduct(event)">
+        <div class="grid-2">
+          <div>
+            <label>Nome do produto</label>
+            <input value="${f.name||''}" oninput="updateFormField('name', this.value)" required>
+          </div>
+          <div>
+            <label>Marca</label>
+            <input value="${f.brand||''}" oninput="updateFormField('brand', this.value)" required>
+          </div>
+          <div>
+            <label>Categoria</label>
+            <input value="${f.category||''}" oninput="updateFormField('category', this.value)" required placeholder="Ex: Séruns">
+          </div>
+          <div>
+            <label>Tamanho / ml (opcional)</label>
+            <input value="${f.ml||''}" oninput="updateFormField('ml', this.value)" placeholder="Ex: 30ml">
+          </div>
+          <div>
+            <label>Preço (R$)</label>
+            <input value="${f.price||''}" oninput="updateFormField('price', this.value)" required placeholder="Ex: 199.00">
+          </div>
+          <div>
+            <label>Selo (opcional)</label>
+            <select onchange="updateFormField('badge', this.value)">
+              <option value="" ${!f.badge?'selected':''}>Nenhum</option>
+              <option value="bestseller" ${f.badge==='bestseller'?'selected':''}>Mais vendido</option>
+              <option value="new" ${f.badge==='new'?'selected':''}>Novo</option>
+              <option value="premium" ${f.badge==='premium'?'selected':''}>Premium</option>
+            </select>
+          </div>
+        </div>
+        <label>Descrição</label>
+        <textarea oninput="updateFormField('description', this.value)">${f.description||''}</textarea>
+
+        <label>Fotos do produto</label>
+        <div class="img-list">
+          ${(f.images||[]).map((src,idx)=>`
+            <div class="img-chip">
+              <img src="${src}">
+              <button type="button" onclick="removeImage(${idx})">×</button>
+            </div>`).join('')}
+        </div>
+        <label id="uploadLabel" class="upload-btn">
+          + Adicionar fotos
+          <input type="file" accept="image/*" multiple style="display:none;" onchange="handleImageUpload(this)">
+        </label>
+        <div class="hint">As fotos são enviadas para o Supabase Storage e aparecem no site automaticamente.</div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+          <button type="submit" class="btn" ${state.saving?'disabled':''}>${state.saving ? 'Salvando...' : 'Salvar'}</button>
+        </div>
+      </form>
+    </div>
+  </div>`;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = state.session ? dashboardHtml() : loginScreenHtml();
+  // reattach file input listener since innerHTML replace wipes it (handled inline via onchange already)
+}
+
+// Bind upload input change via delegation fallback (in case of inline attr issues on some browsers)
+document.addEventListener('change', (e)=>{
+  if(e.target && e.target.matches('input[type=file]')){
+    handleImageUpload(e.target);
+  }
+});
+
+async function init(){
+  const { data } = await sb.auth.getSession();
+  state.session = data.session;
+  if(state.session){ await loadProducts(); }
+  render();
+}
+init();
+</script>
+</body>
+</html>

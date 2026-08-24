@@ -1,7 +1,19 @@
-/* ===================== DATA ===================== */
+/* ===================== CONFIG ===================== */
 const WHATSAPP_NUMBER = "5599992282510";
 
-const PRODUCTS = [
+// Preencha com os dados do seu projeto Supabase (Project Settings > API).
+// Essas duas informações são públicas e seguras para ficar no código do site.
+const SUPABASE_URL = "https://kzqnmhshskrxquvfywyd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6cW5taHNoc2tyeHF1dmZ5d3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1NTM4NTEsImV4cCI6MjEwMzEyOTg1MX0.mHAo4P3r0c6E1HeaSAPZMEDtGyKoPQAa8bJDbVCOlaM";
+
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ===================== DATA (fallback) =====================
+   Este array só é usado se o site não conseguir se conectar ao
+   Supabase (ex: internet fora do ar). Os produtos reais agora
+   são gerenciados pelo painel admin.html.
+   =================================================================== */
+const FALLBACK_PRODUCTS = [
 {name:"Zero Pore Pad",brand:"MEDICUBE",ml:"70 pads",category:"Pads",price:209.00,images:['assets/medicube/medicube-zero-pore-pad.jpg'],
  desc:"Pads de esfoliação dupla com AHA e BHA que removem células mortas, desobstroem os poros e controlam a oleosidade. Ajudam a reduzir cravos, suavizar a textura da pele e minimizar a aparência dos poros. Indicados principalmente para peles mistas, oleosas e com tendência a acne."},
 {name:"PDRN Pink Peptide Serum",brand:"MEDICUBE",ml:"30ml",category:"Séruns",price:199.00,images:['assets/medicube/medicube-serum-peptide.jpg'],
@@ -218,8 +230,47 @@ const PRODUCTS = [
  desc:"Máscara capilar coreana com colágeno, ceramidas e proteínas, desenvolvida para nutrir, reparar e fortalecer fios danificados, deixando o cabelo mais macio, alinhado e brilhante. Ideal para cabelos secos, danificados, quebradiços ou quimicamente tratados."},
 ].map((p,i)=>({...p, id:i+1}));
 
-const CATEGORIES = [...new Set(PRODUCTS.map(p=>p.category))];
-const BRANDS = [...new Set(PRODUCTS.map(p=>p.brand))];
+/* Estas três variáveis eram "const" fixas; agora são preenchidas
+   dinamicamente depois que os produtos chegam do Supabase. */
+let PRODUCTS = [];
+let CATEGORIES = [];
+let BRANDS = [];
+
+function setProducts(list){
+  PRODUCTS = list;
+  CATEGORIES = [...new Set(PRODUCTS.map(p=>p.category))];
+  BRANDS = [...new Set(PRODUCTS.map(p=>p.brand))];
+}
+
+// Converte uma linha da tabela "products" do Supabase para o formato que o site usa
+function mapRowToProduct(row, idx){
+  return {
+    id: row.id,
+    name: row.name,
+    brand: row.brand,
+    ml: row.ml,
+    category: row.category,
+    price: Number(row.price),
+    images: row.images || [],
+    desc: row.description || "",
+    badge: row.badge || undefined,
+  };
+}
+
+async function loadProducts(){
+  try{
+    const { data, error } = await supabaseClient
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if(error) throw error;
+    if(!data || data.length===0){ setProducts(FALLBACK_PRODUCTS); return; }
+    setProducts(data.map(mapRowToProduct));
+  }catch(err){
+    console.error('Não foi possível carregar produtos do Supabase, usando lista local.', err);
+    setProducts(FALLBACK_PRODUCTS);
+  }
+}
 
 /* ===================== ICONS (line-art bottle set) ===================== */
 const ICONS = {
@@ -555,6 +606,7 @@ function footerHtml(){
       <div class="footer-bottom">
         <span>© ${new Date().getFullYear()} RBeauty Imports. Todos os direitos reservados.</span>
         <span>Cosméticos importados premium.</span>
+        <a href="admin.html" style="opacity:.45; font-size:11px; text-decoration:none; color:inherit; margin-left:auto;">GERENCIAR</a>
       </div>
     </div>
   </footer>`;
@@ -803,4 +855,10 @@ window.addEventListener('scroll', ()=>{
   document.getElementById('topbar')?.classList.toggle('scrolled', window.scrollY>4);
 });
 
-render();
+async function init(){
+  const app = document.getElementById('app');
+  app.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;color:var(--gold-deep,#a8823a);font-family:sans-serif;">Carregando produtos...</div>`;
+  await loadProducts();
+  render();
+}
+init();
