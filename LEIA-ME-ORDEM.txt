@@ -1,0 +1,17 @@
+ATIVAÇÃO DA ORDENAÇÃO DE PRODUTOS
+
+1. Entre no painel do Supabase usado pelo site.
+2. Abra a opção "SQL Editor".
+3. Crie uma nova consulta.
+4. Copie todo o conteúdo do arquivo "supabase-add-product-order.sql".
+5. Cole no SQL Editor e clique em "Run".
+
+Esse procedimento é necessário apenas uma vez.
+
+Depois disso, abra o admin.html normalmente. Na coluna "Ordem", use:
+
+- Seta para cima: move o produto uma posição acima.
+- Seta para baixo: move o produto uma posição abaixo.
+- Lançamentos primeiro: coloca no início os produtos com o selo "Novo".
+
+A ordem é salva no Supabase e aparece automaticamente no catálogo para todos.

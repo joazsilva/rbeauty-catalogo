@@ -262,7 +262,8 @@ async function loadProducts(){
     const { data, error } = await supabaseClient
       .from('products')
       .select('*')
-      .order('created_at', { ascending: true });
+      .order('sort_order', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false });
     if(error) throw error;
     if(!data || data.length===0){ setProducts(FALLBACK_PRODUCTS); return; }
     setProducts(data.map(mapRowToProduct));

@@ -81,6 +81,9 @@
   tbody tr:hover{background:var(--panel-2);}
   .thumb{width:38px;height:38px;border-radius:6px;object-fit:cover;background:var(--panel-2);}
   .row-actions{display:flex;gap:6px;}
+  .order-actions{display:flex;align-items:center;gap:5px;white-space:nowrap;}
+  .order-actions button{min-width:31px;padding:6px 8px;}
+  .order-number{min-width:28px;text-align:center;color:var(--text-dim);font-size:12px;}
   .row-actions button{
     background:transparent;border:1px solid var(--border);color:var(--text-dim);
     padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;
@@ -126,7 +129,64 @@
     padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:100;
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  @media(max-width:560px){ .grid-2{grid-template-columns:1fr;} thead th:nth-child(3), tbody td:nth-child(3){display:none;} }
+  @media(max-width:700px){
+    html,body{width:100%;max-width:100%;overflow-x:hidden;}
+    .wrap{width:100%;max-width:100%;padding:16px 12px 60px;overflow:hidden;}
+    .topbar{align-items:flex-start;gap:12px;}
+    .topbar h1{max-width:145px;line-height:1.2;}
+    .topbar .who{display:none;}
+    .toolbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(105px,auto);gap:8px;}
+    .toolbar input[type=text]{max-width:none;min-width:0;}
+    .toolbar .btn{min-width:0;padding:10px 9px;line-height:1.15;}
+    .toolbar .btn-ghost{grid-column:1/-1;}
+    .toolbar > span{grid-column:1/-1;margin-left:0 !important;text-align:right;}
+
+    table,tbody,tr,td{display:block;width:100%;max-width:100%;}
+    table{border:0;background:transparent;overflow:visible;}
+    thead{display:none;}
+    tbody{display:grid;gap:10px;}
+    tbody tr{
+      display:grid;
+      grid-template-columns:52px minmax(0,1fr);
+      gap:8px 12px;
+      width:100%;
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:var(--panel);
+      overflow:hidden;
+    }
+    tbody td{padding:0;border:0;min-width:0;overflow-wrap:anywhere;}
+    tbody td:nth-child(1){grid-column:1;grid-row:1 / span 4;}
+    tbody td:nth-child(1) .thumb{width:52px;height:52px;}
+    tbody td:nth-child(2){grid-column:2;grid-row:1;}
+    tbody td:nth-child(3){grid-column:2;grid-row:2;color:var(--text-dim);font-size:12px;}
+    tbody td:nth-child(4){grid-column:2;grid-row:3;font-weight:700;color:var(--gold);}
+    tbody td:nth-child(4)::before{content:"Preço: ";font-size:11px;font-weight:500;color:var(--text-dim);}
+    tbody td:nth-child(5){grid-column:2;grid-row:4;}
+    tbody td:nth-child(6){grid-column:1/-1;grid-row:5;margin-top:4px;}
+    .order-actions{justify-content:flex-start;}
+    .order-actions::before{content:"Ordem:";font-size:11px;color:var(--text-dim);margin-right:2px;}
+    .order-actions button{min-width:38px;min-height:34px;}
+    .row-actions{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:8px;}
+    .row-actions button{width:100%;min-height:38px;}
+
+    .modal-overlay{padding:12px 6px;overflow-x:hidden;}
+    .modal{
+      width:calc(100vw - 24px);
+      max-width:calc(100vw - 24px);
+      min-width:0;
+      padding:20px 16px;
+      margin:0 auto 24px;
+      overflow:hidden;
+    }
+    .modal form,.grid-2,.grid-2>div{width:100%;min-width:0;}
+    .grid-2{grid-template-columns:minmax(0,1fr);}
+    .modal input,.modal select,.modal textarea{width:100%;max-width:100%;min-width:0;}
+    .modal textarea{overflow-wrap:anywhere;white-space:pre-wrap;}
+    .modal-actions{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:8px;}
+    .modal-actions .btn{width:100%;min-width:0;padding:11px 8px;}
+  }
 </style>
 </head>
 <body>
@@ -191,7 +251,11 @@ async function handleLogout(){
 /* ============ DATA ============ */
 async function loadProducts(){
   state.loading = true; render();
-  const { data, error } = await sb.from('products').select('*').order('created_at', { ascending:false });
+  const { data, error } = await sb
+    .from('products')
+    .select('*')
+    .order('sort_order', { ascending:true, nullsFirst:false })
+    .order('created_at', { ascending:false });
   state.loading = false;
   if(error){ showToast("Erro ao carregar produtos: " + error.message); return; }
   state.products = data || [];
@@ -203,6 +267,48 @@ function openNewModal(){
   state.form = { name:"", brand:"", ml:"", category:"", price:"", images:[], description:"", badge:"" };
   state.modalOpen = true;
   render();
+}
+
+async function saveCurrentOrder(products, successMessage="Ordem atualizada ✓"){
+  const previous = [...state.products];
+  state.products = products.map((product,index)=>({...product, sort_order:index}));
+  render();
+
+  const updates = state.products.map(product=>
+    sb.from('products').update({sort_order:product.sort_order}).eq('id',product.id)
+  );
+  const results = await Promise.all(updates);
+  const failed = results.find(result=>result.error);
+  if(failed){
+    state.products = previous;
+    render();
+    showToast("Não foi possível salvar a ordem: " + failed.error.message);
+    return;
+  }
+  showToast(successMessage);
+}
+
+async function moveProduct(id, direction){
+  if(state.search){
+    showToast("Limpe a busca para reorganizar os produtos.");
+    return;
+  }
+  const products = [...state.products];
+  const from = products.findIndex(product=>String(product.id)===String(id));
+  const to = from + direction;
+  if(from<0 || to<0 || to>=products.length) return;
+  [products[from], products[to]] = [products[to], products[from]];
+  await saveCurrentOrder(products);
+}
+
+async function putLaunchesFirst(){
+  if(state.search){
+    showToast("Limpe a busca antes de ordenar os lançamentos.");
+    return;
+  }
+  const launches = state.products.filter(product=>product.badge==='new');
+  const others = state.products.filter(product=>product.badge!=='new');
+  await saveCurrentOrder([...launches,...others], "Lançamentos movidos para o início ✓");
 }
 function openEditModal(p){
   state.editingProduct = p;
@@ -263,7 +369,10 @@ async function handleSaveProduct(e){
   if(state.editingProduct){
     ({ error } = await sb.from('products').update(payload).eq('id', state.editingProduct.id));
   } else {
-    ({ error } = await sb.from('products').insert(payload));
+    const firstOrder = state.products.length
+      ? Math.min(...state.products.map(product=>Number(product.sort_order ?? 0))) - 1
+      : 0;
+    ({ error } = await sb.from('products').insert({...payload, sort_order:firstOrder}));
   }
   state.saving = false;
   if(error){ showToast("Erro ao salvar: " + error.message); render(); return; }
@@ -306,7 +415,7 @@ function loginScreenHtml(){
   </div>`;
 }
 
-function productRowHtml(p){
+function productRowHtml(p, index, total){
   const thumb = (p.images && p.images[0]) ? `<img class="thumb" src="${p.images[0]}">` : `<div class="thumb"></div>`;
   return `
   <tr>
@@ -317,6 +426,13 @@ function productRowHtml(p){
     </td>
     <td>${p.category}</td>
     <td>${fmt(p.price)}</td>
+    <td>
+      <div class="order-actions">
+        <button title="Subir produto" aria-label="Subir ${p.name}" onclick="moveProduct('${p.id}',-1)" ${index===0?'disabled':''}>↑</button>
+        <span class="order-number">${index+1}</span>
+        <button title="Descer produto" aria-label="Descer ${p.name}" onclick="moveProduct('${p.id}',1)" ${index===total-1?'disabled':''}>↓</button>
+      </div>
+    </td>
     <td>
       <div class="row-actions">
         <button onclick='openEditModal(${JSON.stringify(p).replace(/'/g,"&apos;")})'>Editar</button>
@@ -340,13 +456,14 @@ function dashboardHtml(){
     <div class="toolbar">
       <input type="text" placeholder="Buscar produto..." value="${state.search}" oninput="setSearch(this.value)">
       <button class="btn" onclick="openNewModal()">+ Novo produto</button>
+      <button class="btn btn-ghost" onclick="putLaunchesFirst()">Lançamentos primeiro</button>
       <span style="color:var(--text-dim);font-size:13px;margin-left:auto;">${list.length} produto(s)</span>
     </div>
     ${state.loading ? `<div class="empty-state">Carregando...</div>` :
       list.length===0 ? `<div class="empty-state">Nenhum produto encontrado.</div>` :
       `<table>
-        <thead><tr><th></th><th>Produto</th><th>Categoria</th><th>Preço</th><th></th></tr></thead>
-        <tbody>${list.map(productRowHtml).join('')}</tbody>
+        <thead><tr><th></th><th>Produto</th><th>Categoria</th><th>Preço</th><th>Ordem</th><th></th></tr></thead>
+        <tbody>${list.map((product,index)=>productRowHtml(product,index,list.length)).join('')}</tbody>
       </table>`
     }
   </div>
