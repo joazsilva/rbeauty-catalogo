@@ -6,6 +6,7 @@
 <title>RBeauty Imports — Painel Admin</title>
 <meta name="robots" content="noindex, nofollow">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
 <style>
   :root{
     --bg:#0f0e0c;
@@ -81,9 +82,17 @@
   tbody tr:hover{background:var(--panel-2);}
   .thumb{width:38px;height:38px;border-radius:6px;object-fit:cover;background:var(--panel-2);}
   .row-actions{display:flex;gap:6px;}
-  .order-actions{display:flex;align-items:center;gap:5px;white-space:nowrap;}
-  .order-actions button{min-width:31px;padding:6px 8px;}
-  .order-number{min-width:28px;text-align:center;color:var(--text-dim);font-size:12px;}
+  .order-actions{display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .drag-handle{
+    display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;
+    border:1px solid var(--border);border-radius:6px;color:var(--text-dim);cursor:grab;
+    font-size:17px;line-height:1;user-select:none;touch-action:none;
+  }
+  .drag-handle:active{cursor:grabbing;}
+  .position-input{width:62px;padding:7px 8px;text-align:center;}
+  .sortable-ghost{opacity:.35;background:rgba(201,161,90,.18) !important;}
+  .sortable-chosen{outline:1px solid var(--gold-deep);}
+  .order-status{font-size:12px;color:var(--gold);}
   .row-actions button{
     background:transparent;border:1px solid var(--border);color:var(--text-dim);
     padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;
@@ -167,7 +176,8 @@
     tbody td:nth-child(6){grid-column:1/-1;grid-row:5;margin-top:4px;}
     .order-actions{justify-content:flex-start;}
     .order-actions::before{content:"Ordem:";font-size:11px;color:var(--text-dim);margin-right:2px;}
-    .order-actions button{min-width:38px;min-height:34px;}
+    .drag-handle{width:38px;height:36px;}
+    .position-input{width:68px;min-height:36px;}
     .row-actions{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:8px;}
     .row-actions button{width:100%;min-height:38px;}
 
@@ -211,6 +221,8 @@ const state = {
   editingProduct: null, // null = novo produto
   form: {},
   saving: false,
+  savingOrder: false,
+  orderDirty: false,
   loginError: "",
 };
 
@@ -259,6 +271,7 @@ async function loadProducts(){
   state.loading = false;
   if(error){ showToast("Erro ao carregar produtos: " + error.message); return; }
   state.products = data || [];
+  state.orderDirty = false;
   render();
 }
 
@@ -269,46 +282,70 @@ function openNewModal(){
   render();
 }
 
-async function saveCurrentOrder(products, successMessage="Ordem atualizada ✓"){
-  const previous = [...state.products];
+function setPendingOrder(products, message="Nova ordem pronta para salvar"){
   state.products = products.map((product,index)=>({...product, sort_order:index}));
+  state.orderDirty = true;
   render();
+  showToast(message);
+}
 
+async function saveCurrentOrder(successMessage="Ordem salva ✓"){
+  if(!state.orderDirty || state.savingOrder) return;
+  state.savingOrder = true;
+  render();
   const updates = state.products.map(product=>
     sb.from('products').update({sort_order:product.sort_order}).eq('id',product.id)
   );
   const results = await Promise.all(updates);
   const failed = results.find(result=>result.error);
+  state.savingOrder = false;
   if(failed){
-    state.products = previous;
     render();
-    showToast("Não foi possível salvar a ordem: " + failed.error.message);
+    showToast("Erro ao salvar. Tente novamente: " + failed.error.message);
     return;
   }
+  state.orderDirty = false;
+  render();
   showToast(successMessage);
 }
 
-async function moveProduct(id, direction){
+function moveProductToPosition(id, requestedPosition){
   if(state.search){
     showToast("Limpe a busca para reorganizar os produtos.");
     return;
   }
   const products = [...state.products];
   const from = products.findIndex(product=>String(product.id)===String(id));
-  const to = from + direction;
-  if(from<0 || to<0 || to>=products.length) return;
-  [products[from], products[to]] = [products[to], products[from]];
-  await saveCurrentOrder(products);
+  const numericPosition = Number(requestedPosition);
+  if(from<0 || !Number.isFinite(numericPosition)) return render();
+  const to = Math.max(0, Math.min(products.length-1, Math.trunc(numericPosition)-1));
+  if(from===to) return render();
+  const [moved] = products.splice(from,1);
+  products.splice(to,0,moved);
+  setPendingOrder(products, `Produto movido para a posição ${to+1}`);
 }
 
-async function putLaunchesFirst(){
+function handleDragOrder(ids){
+  if(state.search) return;
+  const byId = new Map(state.products.map(product=>[String(product.id),product]));
+  const reordered = ids.map(id=>byId.get(String(id))).filter(Boolean);
+  if(reordered.length!==state.products.length) return;
+  setPendingOrder(reordered, "Produto reposicionado — clique em Salvar ordem");
+}
+
+function discardOrderChanges(){
+  if(!state.orderDirty) return;
+  loadProducts();
+}
+
+function putLaunchesFirst(){
   if(state.search){
     showToast("Limpe a busca antes de ordenar os lançamentos.");
     return;
   }
   const launches = state.products.filter(product=>product.badge==='new');
   const others = state.products.filter(product=>product.badge!=='new');
-  await saveCurrentOrder([...launches,...others], "Lançamentos movidos para o início ✓");
+  setPendingOrder([...launches,...others], "Lançamentos movidos — clique em Salvar ordem");
 }
 function openEditModal(p){
   state.editingProduct = p;
@@ -415,10 +452,10 @@ function loginScreenHtml(){
   </div>`;
 }
 
-function productRowHtml(p, index, total){
+function productRowHtml(p, index){
   const thumb = (p.images && p.images[0]) ? `<img class="thumb" src="${p.images[0]}">` : `<div class="thumb"></div>`;
   return `
-  <tr>
+  <tr data-product-id="${p.id}">
     <td>${thumb}</td>
     <td>
       <div style="font-weight:600;">${p.name}</div>
@@ -428,9 +465,11 @@ function productRowHtml(p, index, total){
     <td>${fmt(p.price)}</td>
     <td>
       <div class="order-actions">
-        <button title="Subir produto" aria-label="Subir ${p.name}" onclick="moveProduct('${p.id}',-1)" ${index===0?'disabled':''}>↑</button>
-        <span class="order-number">${index+1}</span>
-        <button title="Descer produto" aria-label="Descer ${p.name}" onclick="moveProduct('${p.id}',1)" ${index===total-1?'disabled':''}>↓</button>
+        <span class="drag-handle" title="Arraste para mudar a ordem" aria-label="Arrastar ${p.name}">☰</span>
+        <input class="position-input" type="number" min="1" max="${state.products.length}" value="${index+1}"
+          aria-label="Posição de ${p.name}" title="Digite a posição desejada"
+          onchange="moveProductToPosition('${p.id}', this.value)"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
       </div>
     </td>
     <td>
@@ -457,13 +496,15 @@ function dashboardHtml(){
       <input type="text" placeholder="Buscar produto..." value="${state.search}" oninput="setSearch(this.value)">
       <button class="btn" onclick="openNewModal()">+ Novo produto</button>
       <button class="btn btn-ghost" onclick="putLaunchesFirst()">Lançamentos primeiro</button>
+      <button class="btn" onclick="saveCurrentOrder()" ${!state.orderDirty || state.savingOrder?'disabled':''}>${state.savingOrder?'Salvando...':'Salvar ordem'}</button>
+      ${state.orderDirty?`<button class="btn btn-ghost" onclick="discardOrderChanges()">Descartar</button><span class="order-status">Alterações não salvas</span>`:''}
       <span style="color:var(--text-dim);font-size:13px;margin-left:auto;">${list.length} produto(s)</span>
     </div>
     ${state.loading ? `<div class="empty-state">Carregando...</div>` :
       list.length===0 ? `<div class="empty-state">Nenhum produto encontrado.</div>` :
       `<table>
         <thead><tr><th></th><th>Produto</th><th>Categoria</th><th>Preço</th><th>Ordem</th><th></th></tr></thead>
-        <tbody>${list.map((product,index)=>productRowHtml(product,index,list.length)).join('')}</tbody>
+        <tbody id="productsTableBody">${list.map((product,index)=>productRowHtml(product,index)).join('')}</tbody>
       </table>`
     }
   </div>
@@ -538,6 +579,20 @@ function modalHtml(){
 function render(){
   const app = document.getElementById('app');
   app.innerHTML = state.session ? dashboardHtml() : loginScreenHtml();
+  if(state.session && !state.loading && !state.search){
+    const tbody = document.getElementById('productsTableBody');
+    if(tbody && window.Sortable){
+      Sortable.create(tbody, {
+        animation: 160,
+        handle: '.drag-handle',
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        onEnd(){
+          handleDragOrder(Array.from(tbody.querySelectorAll('tr')).map(row=>row.dataset.productId));
+        }
+      });
+    }
+  }
   // reattach file input listener since innerHTML replace wipes it (handled inline via onchange already)
 }
 

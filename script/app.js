@@ -6,7 +6,9 @@ const WHATSAPP_NUMBER = "5599992282510";
 const SUPABASE_URL = "https://kzqnmhshskrxquvfywyd.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6cW5taHNoc2tyeHF1dmZ5d3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1NTM4NTEsImV4cCI6MjEwMzEyOTg1MX0.mHAo4P3r0c6E1HeaSAPZMEDtGyKoPQAa8bJDbVCOlaM";
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const PRODUCTS_ENDPOINT = `${SUPABASE_URL}/rest/v1/products?select=id,name,brand,ml,category,price,images,description,badge,sort_order,created_at&order=sort_order.asc.nullslast,created_at.desc`;
+const PRODUCTS_CACHE_KEY = 'rbeauty-products-v1';
+const INITIAL_PRODUCT_COUNT = 12;
 
 /* ===================== DATA (fallback) =====================
    Este array só é usado se o site não conseguir se conectar ao
@@ -259,18 +261,22 @@ function mapRowToProduct(row, idx){
 
 async function loadProducts(){
   try{
-    const { data, error } = await supabaseClient
-      .from('products')
-      .select('*')
-      .order('sort_order', { ascending: true, nullsFirst: false })
-      .order('created_at', { ascending: false });
-    if(error) throw error;
-    if(!data || data.length===0){ setProducts(FALLBACK_PRODUCTS); return; }
-    setProducts(data.map(mapRowToProduct));
+    const response = await fetch(PRODUCTS_ENDPOINT, {
+      headers:{ apikey:SUPABASE_ANON_KEY, Authorization:`Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if(!data || data.length===0){
+      setProducts(FALLBACK_PRODUCTS);
+    }else{
+      setProducts(data.map(mapRowToProduct));
+      try{ localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(data)); }catch(_error){}
+    }
   }catch(err){
     console.error('Não foi possível carregar produtos do Supabase, usando lista local.', err);
-    setProducts(FALLBACK_PRODUCTS);
+    if(PRODUCTS.length===0) setProducts(FALLBACK_PRODUCTS);
   }
+  state.productsLoading = false;
 }
 
 /* ===================== ICONS (line-art bottle set) ===================== */
@@ -324,7 +330,7 @@ function productImage(p, idx=0){
 function mediaHtml(p, extra=""){
   const src = productImage(p);
   if(src){
-    return `<img src="${src}" alt="${p.name}" class="prod-img" loading="lazy" ${extra} onerror="this.replaceWith(iconEl('${p.category.replace(/'/g,"\\'")}'))">`;
+    return `<img src="${src}" alt="${p.name}" class="prod-img" loading="lazy" decoding="async" ${extra} onerror="this.replaceWith(iconEl('${p.category.replace(/'/g,"\\'")}'))">`;
   }
   return iconSvg(p.category, extra);
 }
@@ -332,7 +338,7 @@ function mediaHtml(p, extra=""){
 function mediaHtmlFull(p, idx){
   const src = productImage(p, idx);
   if(src){
-    return `<img src="${src}" alt="${p.name}" class="prod-img" loading="lazy" onerror="this.replaceWith(iconEl('${p.category.replace(/'/g,"\\'")}'))">`;
+    return `<img src="${src}" alt="${p.name}" class="prod-img" loading="eager" decoding="async" fetchpriority="high" onerror="this.replaceWith(iconEl('${p.category.replace(/'/g,"\\'")}'))">`;
   }
   return iconVariant(p.category, idx);
 }
@@ -363,6 +369,8 @@ const state = {
   lightbox:null,
   galleryIdx:0,
   toastMsg:null,
+  visibleCount:INITIAL_PRODUCT_COUNT,
+  productsLoading:true,
 };
 let toastTimer=null;
 
@@ -443,10 +451,12 @@ function closeMenu(){ document.getElementById('menuDrawer')?.classList.remove('s
 function toggleSearch(){ state.searchOpen=!state.searchOpen; document.querySelector('.search-bar-wrap')?.classList.toggle('open',state.searchOpen); if(state.searchOpen) requestAnimationFrame(()=>document.getElementById('searchInput')?.focus()); }
 function openLightbox(id){ state.lightbox=id; document.getElementById('lightbox')?.remove(); document.getElementById('app')?.insertAdjacentHTML('beforeend',lightboxHtml()); requestAnimationFrame(()=>document.getElementById('lightbox')?.classList.add('show')); }
 function closeLightbox(){ document.getElementById('lightbox')?.classList.remove('show'); setTimeout(()=>{state.lightbox=null; document.getElementById('lightbox')?.remove();},200); }
-function setCategory(c){ state.category=c; document.querySelectorAll('.chip').forEach(el=>el.classList.toggle('active',el.textContent.trim()===(c==='all'?'Todas':c))); renderProductsOnly(); }
-function setBrandFilter(b){ state.brand=b; renderProductsOnly(); }
-function setSort(v){ state.sort=v; renderProductsOnly(); }
-function setQuery(v){ state.query=v; renderProductsOnly(); }
+function resetVisibleProducts(){ state.visibleCount=INITIAL_PRODUCT_COUNT; }
+function setCategory(c){ state.category=c; resetVisibleProducts(); document.querySelectorAll('.chip').forEach(el=>el.classList.toggle('active',el.textContent.trim()===(c==='all'?'Todas':c))); renderProductsOnly(); }
+function setBrandFilter(b){ state.brand=b; resetVisibleProducts(); renderProductsOnly(); }
+function setSort(v){ state.sort=v; resetVisibleProducts(); renderProductsOnly(); }
+function setQuery(v){ state.query=v; resetVisibleProducts(); renderProductsOnly(); }
+function loadMoreProducts(){ state.visibleCount+=12; renderProductsOnly(); }
 function goHome(){ state.view='home'; state.productId=null; document.querySelector('.pdp-overlay')?.remove(); window.scrollTo(0,0); }
 function nextGalleryImg(dir){ const p=findProduct(state.productId); const count=productGalleryCount(p); state.galleryIdx=(state.galleryIdx+dir+count)%count; const overlay=document.querySelector('.pdp-overlay'); if(overlay) overlay.outerHTML=productHtml(); }
 function selectGalleryImg(index){
@@ -522,9 +532,9 @@ function cardHtml(p){
   <div class="card">
     <div class="card-media" onclick="openProduct(${p.id})">
       ${p.badge?`<span class="card-badge ${p.badge}">${p.badge==='bestseller'?'Mais vendido':p.badge==='premium'?'Premium':'Novo'}</span>`:''}
-      <button class="fav-btn ${fav?'active':''}" onclick="toggleFav(${p.id},event)">${UI.heart(fav)}</button>
+      <button class="fav-btn ${fav?'active':''}" aria-label="${fav?'Remover dos favoritos':'Adicionar aos favoritos'}" onclick="toggleFav(${p.id},event)">${UI.heart(fav)}</button>
       ${mediaHtml(p)}
-      <span class="zoom-hint" onclick="event.stopPropagation(); openLightbox(${p.id})">${UI.zoom}</span>
+      <button class="zoom-hint" aria-label="Ampliar imagem de ${p.name}" onclick="event.stopPropagation(); openLightbox(${p.id})">${UI.zoom}</button>
     </div>
     <div class="card-body">
       <div class="card-brand">${p.brand}</div>
@@ -542,6 +552,7 @@ function cardHtml(p){
 function renderProductsOnly(){
   const grid = document.getElementById('mainGrid');
   const list = getFiltered();
+  const visible = list.slice(0,state.visibleCount);
   if(!grid) return;
   if(list.length===0){
     grid.outerHTML = `<div class="empty-state" id="mainGrid" style="grid-column:1/-1;">
@@ -550,7 +561,8 @@ function renderProductsOnly(){
       <p>Tente buscar por outro nome, marca ou categoria.</p>
     </div>`;
   } else {
-    grid.innerHTML = list.map(cardHtml).join('');
+    grid.innerHTML = visible.map(cardHtml).join('') + (visible.length<list.length
+      ? `<div class="load-more-wrap" style="grid-column:1/-1"><button class="btn btn-dark" onclick="loadMoreProducts()">Carregar mais produtos</button></div>` : '');
     grid.className = 'grid';
   }
   const countEl = document.getElementById('resultCount');
@@ -560,6 +572,7 @@ function renderProductsOnly(){
 /* ===================== RENDER: HOME ===================== */
 function homeHtml(){
   const filtered = getFiltered();
+  const visible = filtered.slice(0,state.visibleCount);
   return `
   <section class="hero">
     <div class="hero-ring"><div class="logo-mark" style="background:none;box-shadow:none;"><img src="assets/logo/icone-r.png" alt="RBeauty" style="width:100%;height:100%;object-fit:contain;"></div></div>
@@ -603,13 +616,15 @@ function homeHtml(){
         </div>
       </div>
     </div>
-    ${filtered.length===0 ? `
+    ${state.productsLoading && filtered.length===0 ? `
+      <div class="grid" id="mainGrid"><div class="catalog-loading">Carregando catálogo...</div></div>` : filtered.length===0 ? `
       <div class="empty-state" id="mainGrid">
         ${UI.search52}
         <h3>Nenhum produto encontrado</h3>
         <p>Tente buscar por outro nome, marca ou categoria.</p>
       </div>` : `
-      <div class="grid" id="mainGrid">${filtered.map(cardHtml).join('')}</div>`}
+      <div class="grid" id="mainGrid">${visible.map(cardHtml).join('')}${visible.length<filtered.length
+        ? `<div class="load-more-wrap" style="grid-column:1/-1"><button class="btn btn-dark" onclick="loadMoreProducts()">Carregar mais produtos</button></div>` : ''}</div>`}
   </section>
 
   ${footerHtml()}
@@ -658,8 +673,8 @@ function productHtml(){
   <div class="pdp-overlay" onclick="if(event.target===this) closeProduct()">
     <div class="pdp-inner">
       <div class="pdp-topbar">
-        <button class="icon-btn" style="background:rgba(255,255,255,.7);" onclick="closeProduct()">${UI.back}</button>
-        <button class="icon-btn ${fav?'active':''}" style="background:rgba(255,255,255,.7); color:${fav?'#b23b4e':'inherit'}" onclick="toggleFav(${p.id})">${UI.heart(fav)}</button>
+        <button class="icon-btn" aria-label="Voltar" style="background:rgba(255,255,255,.7);" onclick="closeProduct()">${UI.back}</button>
+        <button class="icon-btn ${fav?'active':''}" aria-label="${fav?'Remover dos favoritos':'Adicionar aos favoritos'}" style="background:rgba(255,255,255,.7); color:${fav?'#b23b4e':'inherit'}" onclick="toggleFav(${p.id})">${UI.heart(fav)}</button>
       </div>
       <div>
         <div class="pdp-gallery" onclick="openLightbox(${p.id})">
@@ -667,7 +682,7 @@ function productHtml(){
           ${mediaHtmlFull(p, state.galleryIdx)}
         </div>
         <div class="pdp-dots">
-          ${Array.from({length:productGalleryCount(p)},(_,i)=>i).map(i=>`<button class="${state.galleryIdx===i?'active':''}" onclick="event.stopPropagation(); selectGalleryImg(${i});"></button>`).join('')}
+          ${Array.from({length:productGalleryCount(p)},(_,i)=>i).map(i=>`<button aria-label="Ver imagem ${i+1}" class="${state.galleryIdx===i?'active':''}" onclick="event.stopPropagation(); selectGalleryImg(${i});"></button>`).join('')}
         </div>
       </div>
       <div class="pdp-body">
@@ -683,9 +698,9 @@ function productHtml(){
         <div class="pdp-qty-row">
           <span class="label">Quantidade</span>
           <div class="qty-stepper">
-            <button onclick="changeDetailQty(-1)">${UI.minus}</button>
+            <button aria-label="Diminuir quantidade" onclick="changeDetailQty(-1)">${UI.minus}</button>
             <span id="detailQty">${qty}</span>
-            <button onclick="changeDetailQty(1)">${UI.plus}</button>
+            <button aria-label="Aumentar quantidade" onclick="changeDetailQty(1)">${UI.plus}</button>
           </div>
         </div>
         <div class="pdp-actions">
@@ -731,7 +746,7 @@ function cartDrawerHtml(){
   <div id="cartDrawer" class="drawer ${state.cartOpen?'show':''}">
     <div class="drawer-head">
       <h3>Seu carrinho</h3>
-      <button class="icon-btn" onclick="closeCart()">${UI.close}</button>
+      <button class="icon-btn" aria-label="Fechar carrinho" onclick="closeCart()">${UI.close}</button>
     </div>
     <div class="drawer-body">
       ${state.cart.length===0? `
@@ -749,9 +764,9 @@ function cartDrawerHtml(){
               <div class="brand">${p.brand}</div>
               <div class="name">${p.name}</div>
               <div class="qty-stepper">
-                <button onclick="updateQty(${p.id},-1)">${UI.minus}</button>
+                <button aria-label="Diminuir quantidade" onclick="updateQty(${p.id},-1)">${UI.minus}</button>
                 <span>${c.qty}</span>
-                <button onclick="updateQty(${p.id},1)">${UI.plus}</button>
+                <button aria-label="Aumentar quantidade" onclick="updateQty(${p.id},1)">${UI.plus}</button>
               </div>
             </div>
             <div class="cart-item-right">
@@ -777,7 +792,7 @@ function menuDrawerHtml(){
   <div id="menuDrawer" class="menu-drawer ${state.menuOpen?'show':''}">
     <div class="menu-head">
       <div class="logo"><div class="logo-mark" style="background:none;box-shadow:none;"><img src="assets/logo/icone-r.png" alt="RBeauty" style="width:100%;height:100%;object-fit:contain;"></div><div class="logo-text">RBeauty<small>Imports</small></div></div>
-      <button class="icon-btn" onclick="closeMenu()">${UI.close}</button>
+      <button class="icon-btn" aria-label="Fechar menu" onclick="closeMenu()">${UI.close}</button>
     </div>
     <div class="menu-body">
       <button class="menu-item" onclick="closeMenu(); goHome();">${UI.home} Início</button>
@@ -816,7 +831,7 @@ function lightboxHtml(){
   const p = findProduct(state.lightbox);
   return `
   <div id="lightbox" class="lightbox" onclick="if(event.target===this) closeLightbox()">
-    <button class="lightbox-close" onclick="closeLightbox()">${UI.close}</button>
+    <button class="lightbox-close" aria-label="Fechar imagem" onclick="closeLightbox()">${UI.close}</button>
     ${productImage(p) ? mediaHtml(p) : iconSvg(p.category, 'style="color:var(--gold)"')}
     <div class="lightbox-hint">${p.brand} · ${p.name}</div>
   </div>`;
@@ -832,13 +847,13 @@ function headerHtml(){
   <header class="topbar" id="topbar">
     <div class="topbar-inner">
       <div class="logo" onclick="goHome()">
-        <div class="logo-mark" style="background:none;box-shadow:none;"><img src="assets/logo/icone-r.png" alt="RBeauty" style="width:100%;height:100%;object-fit:contain;"></div>
+        <div class="logo-mark" style="background:none;box-shadow:none;"><img src="assets/logo/icone-r.png" alt="RBeauty" width="34" height="34" decoding="async" style="width:100%;height:100%;object-fit:contain;"></div>
         <div class="logo-text">RBeauty<small>Imports</small></div>
       </div>
       <div class="topbar-actions">
-        <button class="icon-btn" onclick="toggleSearch()">${UI.search}</button>
-        <button class="icon-btn" onclick="openCart()">${UI.cart}${cartCount()>0?`<span class="badge-count">${cartCount()}</span>`:''}</button>
-        <button class="icon-btn" onclick="openMenu()">${UI.menu}</button>
+        <button class="icon-btn" aria-label="Abrir busca" onclick="toggleSearch()">${UI.search}</button>
+        <button class="icon-btn" aria-label="Abrir carrinho" onclick="openCart()">${UI.cart}${cartCount()>0?`<span class="badge-count">${cartCount()}</span>`:''}</button>
+        <button class="icon-btn" aria-label="Abrir menu" onclick="openMenu()">${UI.menu}</button>
       </div>
     </div>
     <div class="search-bar-wrap ${state.searchOpen?'open':''}">
@@ -969,8 +984,11 @@ window.addEventListener('scroll', ()=>{
 
 async function init(){
   ensureDesktopProductLayout();
-  const app = document.getElementById('app');
-  app.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;color:var(--gold-deep,#a8823a);font-family:sans-serif;">Carregando produtos...</div>`;
+  try{
+    const cached = JSON.parse(localStorage.getItem(PRODUCTS_CACHE_KEY) || 'null');
+    if(Array.isArray(cached) && cached.length){ setProducts(cached.map(mapRowToProduct)); }
+  }catch(_error){}
+  render();
   await loadProducts();
   render();
 }

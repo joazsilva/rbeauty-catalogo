@@ -8,10 +8,13 @@ ATIVAÇÃO DA ORDENAÇÃO DE PRODUTOS
 
 Esse procedimento é necessário apenas uma vez.
 
-Depois disso, abra o admin.html normalmente. Na coluna "Ordem", use:
+Depois disso, abra o admin.html normalmente. Na coluna "Ordem", você pode:
 
-- Seta para cima: move o produto uma posição acima.
-- Seta para baixo: move o produto uma posição abaixo.
-- Lançamentos primeiro: coloca no início os produtos com o selo "Novo".
+- Segurar o ícone de três linhas e arrastar o produto para a posição desejada.
+- Digitar diretamente o número da posição e pressionar Enter ou sair do campo.
+- Usar "Lançamentos primeiro" para colocar no início os produtos com o selo "Novo".
+- Clicar em "Salvar ordem" para confirmar todas as alterações no Supabase.
+- Usar "Descartar" para voltar à última ordem salva.
 
-A ordem é salva no Supabase e aparece automaticamente no catálogo para todos.
+Enquanto houver mudanças pendentes, o painel mostra "Alterações não salvas". Após
+clicar em "Salvar ordem", a nova sequência aparece automaticamente no catálogo.
