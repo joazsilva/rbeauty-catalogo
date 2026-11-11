@@ -102,6 +102,7 @@
     font-size:10px;text-transform:uppercase;padding:2px 8px;border-radius:20px;
     background:rgba(201,161,90,.15);color:var(--gold);border:1px solid rgba(201,161,90,.3);
   }
+  .badge-tag.blackfriday{background:#211b1b;color:#fff;border-color:#b4232f;}
   .empty-state{padding:60px 20px;text-align:center;color:var(--text-dim);}
 
   /* MODAL */
@@ -277,7 +278,7 @@ async function loadProducts(){
 
 function openNewModal(){
   state.editingProduct = null;
-  state.form = { name:"", brand:"", ml:"", category:"", price:"", images:[], description:"", badge:"" };
+  state.form = { name:"", brand:"", ml:"", category:"", price:"", price_black_friday:"", images:[], description:"", badge:"", is_active:true };
   state.modalOpen = true;
   render();
 }
@@ -349,7 +350,7 @@ function putLaunchesFirst(){
 }
 function openEditModal(p){
   state.editingProduct = p;
-  state.form = { ...p, images:[...(p.images||[])] };
+  state.form = { ...p, price_black_friday:p.price_black_friday ?? "", is_active:p.is_active !== false, images:[...(p.images||[])] };
   state.modalOpen = true;
   render();
 }
@@ -395,10 +396,18 @@ async function handleSaveProduct(e){
     images: state.form.images || [],
     description: state.form.description?.trim() || "",
     badge: state.form.badge || null,
+    price_black_friday: state.form.badge === 'blackfriday' ? (parseFloat(String(state.form.price_black_friday).replace(',','.')) || null) : null,
+    is_active: state.form.is_active !== false,
   };
   if(!payload.name || !payload.brand || !payload.category || !payload.price){
     state.saving = false;
     showToast("Preencha nome, marca, categoria e preço.");
+    render();
+    return;
+  }
+  if(payload.badge === 'blackfriday' && (!payload.price_black_friday || payload.price_black_friday <= 0 || payload.price_black_friday >= payload.price)){
+    state.saving = false;
+    showToast("Informe um preço Black Friday válido e menor que o preço original.");
     render();
     return;
   }
@@ -459,10 +468,10 @@ function productRowHtml(p, index){
     <td>${thumb}</td>
     <td>
       <div style="font-weight:600;">${p.name}</div>
-      <div style="color:var(--text-dim);font-size:12px;">${p.brand}${p.badge?` · <span class="badge-tag">${p.badge}</span>`:''}</div>
+      <div style="color:var(--text-dim);font-size:12px;">${p.brand}${p.badge?` · <span class="badge-tag ${p.badge}">${p.badge==='bestseller'?'Mais vendido':p.badge==='new'?'Novo':p.badge==='premium'?'Premium':p.badge==='blackfriday'?'Black Friday':p.badge}</span>`:''} · <span style="color:${p.is_active===false?'#b4232f':'#16834a'}">${p.is_active===false?'Oculto':'Visível'}</span></div>
     </td>
     <td>${p.category}</td>
-    <td>${fmt(p.price)}</td>
+    <td>${p.badge==='blackfriday' && p.price_black_friday ? `<s style="color:var(--text-dim)">${fmt(p.price)}</s><br><strong style="color:var(--gold)">${fmt(p.price_black_friday)}</strong>` : fmt(p.price)}</td>
     <td>
       <div class="order-actions">
         <span class="drag-handle" title="Arraste para mudar a ordem" aria-label="Arrastar ${p.name}">☰</span>
@@ -542,14 +551,18 @@ function modalHtml(){
           </div>
           <div>
             <label>Selo (opcional)</label>
-            <select onchange="updateFormField('badge', this.value)">
+            <select onchange="updateFormField('badge', this.value); render()">
               <option value="" ${!f.badge?'selected':''}>Nenhum</option>
               <option value="bestseller" ${f.badge==='bestseller'?'selected':''}>Mais vendido</option>
               <option value="new" ${f.badge==='new'?'selected':''}>Novo</option>
               <option value="premium" ${f.badge==='premium'?'selected':''}>Premium</option>
+              <option value="blackfriday" ${f.badge==='blackfriday'?'selected':''}>Black Friday</option>
             </select>
           </div>
+          ${f.badge==='blackfriday' ? `<div class="field-full"><label>Preço da Black Friday (R$)</label><input type="number" min="0.01" step="0.01" value="${f.price_black_friday||''}" oninput="updateFormField('price_black_friday', this.value)" required placeholder="Ex: 149.90"><div class="hint">O preço original será exibido riscado no catálogo.</div></div>` : ''}
         </div>
+        <label style="display:flex;align-items:center;gap:10px;margin:16px 0;"><input type="checkbox" ${f.is_active!==false?'checked':''} onchange="updateFormField('is_active', this.checked)" style="width:auto;"> Produto visível no site</label>
+        <div class="hint" style="margin-top:-10px;margin-bottom:16px;">Desmarque para ocultar o produto do catálogo sem removê-lo do painel.</div>
         <label>Descrição</label>
         <textarea oninput="updateFormField('description', this.value)">${f.description||''}</textarea>
 

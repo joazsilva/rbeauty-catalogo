@@ -1,0 +1,10 @@
+ATUALIZAÇÃO — BLACK FRIDAY E VISIBILIDADE
+
+1. No painel, selecione o selo Black Friday. O campo “Preço da Black Friday” aparece.
+2. Informe um valor maior que zero e menor que o preço original. O catálogo mostra o preço original riscado e o promocional em destaque. Carrinho e resumo do WhatsApp usam o preço promocional.
+3. Para ocultar um produto sem apagá-lo, desmarque “Produto visível no site”. Ele continua no painel e pode ser reativado depois.
+
+IMPORTANTE — SUPABASE
+Antes de publicar, execute uma vez o arquivo supabase-black-friday-visibility.sql no SQL Editor do Supabase para criar as colunas price_black_friday e is_active.
+
+Depois, publique a pasta RB_project no Netlify.

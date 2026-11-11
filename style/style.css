@@ -212,6 +212,10 @@ header.topbar.scrolled{box-shadow:var(--shadow-sm);}
 .card-badge.bestseller{background:var(--gold-deep); color:#251d0d;}
 .card-badge.premium{background:var(--ink);}
 .card-badge.new{background:#6b5a3a;}
+.card-badge.blackfriday{background:#171313;color:#fff;border:1px solid #c92b3b;letter-spacing:.08em;}
+.chip-blackfriday:not(.active){border-color:#b4232f;color:#b4232f;font-weight:800;}
+.chip-blackfriday.active{background:#211b1b;border-color:#b4232f;color:#fff;}
+.menu-blackfriday{color:#b4232f !important;font-weight:800;}
 .fav-btn{
   position:absolute; top:8px; right:8px; width:30px; height:30px; border-radius:50%;
   background:rgba(255,255,255,.88); border:none; display:flex; align-items:center; justify-content:center;
@@ -402,3 +406,10 @@ footer .logo-text small{color:#a29c8c;}
   .section-head{padding:0 32px;}
   .toolbar{padding:0 32px 14px;}
 }
+
+/* Preço promocional Black Friday */
+.sale-price{display:flex;flex-direction:column;align-items:flex-start;gap:1px;}
+.sale-price .old-price{font-family:var(--font-body);font-size:12px;font-weight:400;color:var(--ink-soft);text-decoration:line-through;}
+.sale-price strong{font:inherit;color:#b4232f;font-weight:700;}
+.card-price.sale-price strong{font-size:19px;}
+.pdp-price.sale-price strong{font-size:30px;}

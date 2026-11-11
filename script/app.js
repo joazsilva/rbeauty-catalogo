@@ -6,7 +6,7 @@ const WHATSAPP_NUMBER = "5599992282510";
 const SUPABASE_URL = "https://kzqnmhshskrxquvfywyd.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6cW5taHNoc2tyeHF1dmZ5d3lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1NTM4NTEsImV4cCI6MjEwMzEyOTg1MX0.mHAo4P3r0c6E1HeaSAPZMEDtGyKoPQAa8bJDbVCOlaM";
 
-const PRODUCTS_ENDPOINT = `${SUPABASE_URL}/rest/v1/products?select=id,name,brand,ml,category,price,images,description,badge,sort_order,created_at&order=sort_order.asc.nullslast,created_at.desc`;
+const PRODUCTS_ENDPOINT = `${SUPABASE_URL}/rest/v1/products?select=id,name,brand,ml,category,price,price_black_friday,is_active,images,description,badge,sort_order,created_at&order=sort_order.asc.nullslast,created_at.desc`;
 const PRODUCTS_CACHE_KEY = 'rbeauty-products-v1';
 const INITIAL_PRODUCT_COUNT = 12;
 
@@ -239,7 +239,7 @@ let CATEGORIES = [];
 let BRANDS = [];
 
 function setProducts(list){
-  PRODUCTS = list;
+  PRODUCTS = list.filter(p=>p.is_active !== false);
   CATEGORIES = [...new Set(PRODUCTS.map(p=>p.category))];
   BRANDS = [...new Set(PRODUCTS.map(p=>p.brand))];
 }
@@ -253,6 +253,8 @@ function mapRowToProduct(row, idx){
     ml: row.ml,
     category: row.category,
     price: Number(row.price),
+    priceBlackFriday: row.price_black_friday == null ? null : Number(row.price_black_friday),
+    is_active: row.is_active !== false,
     images: row.images || [],
     desc: row.description || "",
     badge: row.badge || undefined,
@@ -375,9 +377,20 @@ const state = {
 let toastTimer=null;
 
 function fmt(n){ return "R$ " + n.toFixed(2).replace('.',','); }
+function badgeLabel(badge){
+  return badge==='bestseller'?'Mais vendido':
+    badge==='premium'?'Premium':
+    badge==='blackfriday'?'Black Friday':
+    badge==='new'?'Novo':'';
+}
 function findProduct(id){ return PRODUCTS.find(p=>p.id===id); }
+function effectivePrice(p){ return p && p.badge==='blackfriday' && p.priceBlackFriday>0 ? p.priceBlackFriday : (p?.price||0); }
+function priceHtml(p, className=''){
+  if(p.badge==='blackfriday' && p.priceBlackFriday>0) return `<div class="${className} sale-price"><span class="old-price">${fmt(p.price)}</span><strong>${fmt(p.priceBlackFriday)}</strong></div>`;
+  return `<div class="${className}">${fmt(p.price)}</div>`;
+}
 function cartCount(){ return state.cart.reduce((s,c)=>s+c.qty,0); }
-function cartTotal(){ return state.cart.reduce((s,c)=>s+c.qty*findProduct(c.id).price,0); }
+function cartTotal(){ return state.cart.reduce((s,c)=>s+c.qty*effectivePrice(findProduct(c.id)),0); }
 
 function showToast(msg){
   state.toastMsg = msg;
@@ -452,7 +465,12 @@ function toggleSearch(){ state.searchOpen=!state.searchOpen; document.querySelec
 function openLightbox(id){ state.lightbox=id; document.getElementById('lightbox')?.remove(); document.getElementById('app')?.insertAdjacentHTML('beforeend',lightboxHtml()); requestAnimationFrame(()=>document.getElementById('lightbox')?.classList.add('show')); }
 function closeLightbox(){ document.getElementById('lightbox')?.classList.remove('show'); setTimeout(()=>{state.lightbox=null; document.getElementById('lightbox')?.remove();},200); }
 function resetVisibleProducts(){ state.visibleCount=INITIAL_PRODUCT_COUNT; }
-function setCategory(c){ state.category=c; resetVisibleProducts(); document.querySelectorAll('.chip').forEach(el=>el.classList.toggle('active',el.textContent.trim()===(c==='all'?'Todas':c))); renderProductsOnly(); }
+function setCategory(c){
+  state.category=c;
+  resetVisibleProducts();
+  document.querySelectorAll('.chip').forEach(el=>el.classList.toggle('active',el.dataset.category===c));
+  renderProductsOnly();
+}
 function setBrandFilter(b){ state.brand=b; resetVisibleProducts(); renderProductsOnly(); }
 function setSort(v){ state.sort=v; resetVisibleProducts(); renderProductsOnly(); }
 function setQuery(v){ state.query=v; resetVisibleProducts(); renderProductsOnly(); }
@@ -474,13 +492,13 @@ function whatsappCheckout(single=null){
   if(single){
     const p = findProduct(single.id);
     lines.push(`• ${p.brand} — ${p.name}${p.ml?` (${p.ml})`:''}\n  Quantidade: ${single.qty}`);
-    total = p.price*single.qty;
+    total = effectivePrice(p)*single.qty;
   } else {
     if(state.cart.length===0){ showToast("Seu carrinho está vazio"); return; }
     state.cart.forEach(c=>{
       const p = findProduct(c.id);
       lines.push(`• ${p.brand} — ${p.name}${p.ml?` (${p.ml})`:''}\n  Quantidade: ${c.qty}`);
-      total += p.price*c.qty;
+      total += effectivePrice(p)*c.qty;
     });
   }
   const msg = `Olá! 👋\n\nTenho interesse nos seguintes produtos:\n\n${lines.join('\n\n')}\n\nTotal: ${fmt(total)}\n\nGostaria de finalizar meu pedido.`;
@@ -490,15 +508,16 @@ function whatsappCheckout(single=null){
 
 function getFiltered(){
   let list = [...PRODUCTS];
-  if(state.category!=='all') list = list.filter(p=>p.category===state.category);
+  if(state.category==='blackfriday') list = list.filter(p=>p.badge==='blackfriday');
+  else if(state.category!=='all') list = list.filter(p=>p.category===state.category);
   if(state.brand!=='all') list = list.filter(p=>p.brand===state.brand);
   if(state.query.trim()){
     const q = state.query.trim().toLowerCase();
     list = list.filter(p=> (p.name+p.brand+p.category+p.desc).toLowerCase().includes(q));
   }
   switch(state.sort){
-    case 'price-asc': list.sort((a,b)=>a.price-b.price); break;
-    case 'price-desc': list.sort((a,b)=>b.price-a.price); break;
+    case 'price-asc': list.sort((a,b)=>effectivePrice(a)-effectivePrice(b)); break;
+    case 'price-desc': list.sort((a,b)=>effectivePrice(b)-effectivePrice(a)); break;
     case 'az': list.sort((a,b)=>a.name.localeCompare(b.name)); break;
     case 'brand': list.sort((a,b)=>a.brand.localeCompare(b.brand)); break;
     case 'category': list.sort((a,b)=>a.category.localeCompare(b.category)); break;
@@ -531,7 +550,7 @@ function cardHtml(p){
   return `
   <div class="card">
     <div class="card-media" onclick="openProduct(${p.id})">
-      ${p.badge?`<span class="card-badge ${p.badge}">${p.badge==='bestseller'?'Mais vendido':p.badge==='premium'?'Premium':'Novo'}</span>`:''}
+      ${p.badge?`<span class="card-badge ${p.badge}">${badgeLabel(p.badge)}</span>`:''}
       <button class="fav-btn ${fav?'active':''}" aria-label="${fav?'Remover dos favoritos':'Adicionar aos favoritos'}" onclick="toggleFav(${p.id},event)">${UI.heart(fav)}</button>
       ${mediaHtml(p)}
       <button class="zoom-hint" aria-label="Ampliar imagem de ${p.name}" onclick="event.stopPropagation(); openLightbox(${p.id})">${UI.zoom}</button>
@@ -540,7 +559,7 @@ function cardHtml(p){
       <div class="card-brand">${p.brand}</div>
       <h3 class="card-name">${p.name}</h3>
       <div class="card-cat">${p.category}${p.ml?' · '+p.ml:''}</div>
-      <div class="card-price">${fmt(p.price)}</div>
+      ${priceHtml(p,'card-price')}
       <div class="card-actions">
         <button class="btn btn-outline" onclick="openProduct(${p.id})">Detalhes</button>
         <button class="btn btn-gold" onclick="addToCart(${p.id})">Adicionar</button>
@@ -558,7 +577,7 @@ function renderProductsOnly(){
     grid.outerHTML = `<div class="empty-state" id="mainGrid" style="grid-column:1/-1;">
       ${UI.search52}
       <h3>Nenhum produto encontrado</h3>
-      <p>Tente buscar por outro nome, marca ou categoria.</p>
+      <p>${state.category==='blackfriday'?'Nenhum produto foi selecionado para a Black Friday ainda.':'Tente buscar por outro nome, marca ou categoria.'}</p>
     </div>`;
   } else {
     grid.innerHTML = visible.map(cardHtml).join('') + (visible.length<list.length
@@ -567,6 +586,10 @@ function renderProductsOnly(){
   }
   const countEl = document.getElementById('resultCount');
   if(countEl) countEl.textContent = `${list.length} produto${list.length!==1?'s':''}`;
+  const eyebrow = document.getElementById('categoryEyebrow');
+  const title = document.getElementById('categoryTitle');
+  if(eyebrow) eyebrow.textContent = state.category==='blackfriday'?'OFERTAS ESPECIAIS':'Catálogo completo';
+  if(title) title.textContent = state.category==='blackfriday'?'Black Friday':'Todos os produtos';
 }
 
 /* ===================== RENDER: HOME ===================== */
@@ -586,14 +609,15 @@ function homeHtml(){
 
   <section class="section" style="padding-top:26px;">
     <div class="hscroll" style="padding:0 20px;">
-      <button class="chip ${state.category==='all'?'active':''}" onclick="setCategory('all')">Todas</button>
-      ${CATEGORIES.map(c=>`<button class="chip ${state.category===c?'active':''}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`).join('')}
+      <button class="chip ${state.category==='all'?'active':''}" data-category="all" onclick="setCategory('all')">Todas</button>
+      ${PRODUCTS.some(p=>p.badge==='blackfriday')?`<button class="chip chip-blackfriday ${state.category==='blackfriday'?'active':''}" data-category="blackfriday" onclick="setCategory('blackfriday')">BLACK FRIDAY</button>`:''}
+      ${CATEGORIES.map(c=>`<button class="chip ${state.category===c?'active':''}" data-category="${c.replace(/"/g,'&quot;')}" onclick="setCategory('${c.replace(/'/g,"\\'")}')">${c}</button>`).join('')}
     </div>
   </section>
 
   <section class="section" id="catalogo">
     <div class="section-head">
-      <div><p class="eyebrow">Catálogo completo</p><h2 class="section-title">Todos os produtos</h2></div>
+      <div><p class="eyebrow" id="categoryEyebrow">${state.category==='blackfriday'?'OFERTAS ESPECIAIS':'Catálogo completo'}</p><h2 class="section-title" id="categoryTitle">${state.category==='blackfriday'?'Black Friday':'Todos os produtos'}</h2></div>
     </div>
     <div class="toolbar">
       <span id="resultCount" style="font-size:12.5px; color:var(--ink-soft); font-weight:600;">${filtered.length} produtos</span>
@@ -621,7 +645,7 @@ function homeHtml(){
       <div class="empty-state" id="mainGrid">
         ${UI.search52}
         <h3>Nenhum produto encontrado</h3>
-        <p>Tente buscar por outro nome, marca ou categoria.</p>
+        <p>${state.category==='blackfriday'?'Nenhum produto foi selecionado para a Black Friday ainda.':'Tente buscar por outro nome, marca ou categoria.'}</p>
       </div>` : `
       <div class="grid" id="mainGrid">${visible.map(cardHtml).join('')}${visible.length<filtered.length
         ? `<div class="load-more-wrap" style="grid-column:1/-1"><button class="btn btn-dark" onclick="loadMoreProducts()">Carregar mais produtos</button></div>` : ''}</div>`}
@@ -678,7 +702,7 @@ function productHtml(){
       </div>
       <div>
         <div class="pdp-gallery" onclick="openLightbox(${p.id})">
-          ${p.badge?`<span class="card-badge ${p.badge}" style="left:14px; top:14px;">${p.badge==='bestseller'?'Mais vendido':p.badge==='premium'?'Premium':'Novo'}</span>`:''}
+          ${p.badge?`<span class="card-badge ${p.badge}" style="left:14px; top:14px;">${badgeLabel(p.badge)}</span>`:''}
           ${mediaHtmlFull(p, state.galleryIdx)}
         </div>
         <div class="pdp-dots">
@@ -692,7 +716,7 @@ function productHtml(){
           <span class="tag">${p.category}</span>
           ${p.ml?`<span class="tag">${p.ml}</span>`:''}
         </div>
-        <div class="pdp-price">${fmt(p.price)}</div>
+        ${priceHtml(p,'pdp-price')}
         <p class="pdp-desc">${p.desc}</p>
 
         <div class="pdp-qty-row">
@@ -718,7 +742,7 @@ function productHtml(){
                 <div class="info">
                   <div style="font-size:9.5px; font-weight:800; color:var(--gold-deep); text-transform:uppercase; letter-spacing:.06em;">${r.brand}</div>
                   <div class="name">${r.name}</div>
-                  <div class="price">${fmt(r.price)}</div>
+                  ${priceHtml(r,'price')}
                 </div>
               </div>
             `).join('')}
@@ -770,7 +794,7 @@ function cartDrawerHtml(){
               </div>
             </div>
             <div class="cart-item-right">
-              <div class="cart-item-price">${fmt(p.price*c.qty)}</div>
+              <div class="cart-item-price">${fmt(effectivePrice(p)*c.qty)}</div>
               <button class="remove-btn" onclick="removeFromCart(${p.id})">Remover</button>
             </div>
           </div>`;
@@ -797,6 +821,7 @@ function menuDrawerHtml(){
     <div class="menu-body">
       <button class="menu-item" onclick="closeMenu(); goHome();">${UI.home} Início</button>
       <button class="menu-item" onclick="closeMenu(); setCategory('all'); goHome(); setTimeout(()=>document.getElementById('catalogo')?.scrollIntoView(),50);">${UI.grid} Todos os produtos</button>
+      ${PRODUCTS.some(p=>p.badge==='blackfriday')?`<button class="menu-item menu-blackfriday" onclick="closeMenu(); goHome(); setCategory('blackfriday'); setTimeout(()=>document.getElementById('catalogo')?.scrollIntoView(),50);">BLACK FRIDAY <span class="count">${PRODUCTS.filter(p=>p.badge==='blackfriday').length}</span></button>`:''}
       <button class="menu-item" onclick="closeMenu(); showFavoritesView();">${UI.heart(false)} Favoritos <span class="count">${state.favorites.size}</span></button>
       <div class="menu-section"><h5>Categorias</h5></div>
       ${CATEGORIES.map(c=>`<button class="menu-item" onclick="closeMenu(); setCategory('${c.replace(/'/g,"\\'")}'); goHome(); setTimeout(()=>document.getElementById('catalogo')?.scrollIntoView(),50);"><span>${c}</span><span class="count">${PRODUCTS.filter(p=>p.category===c).length}</span></button>`).join('')}
